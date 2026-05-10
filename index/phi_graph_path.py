@@ -1,21 +1,22 @@
+import os
 import psycopg2
 import networkx as nx
 
-# --- 配置信息 ---
-DB_CONFIG = {
-    "database": "philosophy_db", 
-    "user": "postgres", 
-    "password": "536827", 
-    "host": "127.0.0.1", 
-    "port": "5432"
-}
+# --- 数据库连接：优先使用环境变量，兼容本地开发 ---
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:536827@127.0.0.1:5432/philosophy_db")
+
+def get_db_conn():
+    """统一获取数据库连接"""
+    return psycopg2.connect(DATABASE_URL)
+
 
 class ThoughtPathFinder:
     def __init__(self):
-        self.db_config = DB_CONFIG
+        # 不再需要存储 DB_CONFIG，直接使用统一的连接函数
+        pass
 
     def _get_db_conn(self):
-        return psycopg2.connect(**self.db_config)
+        return get_db_conn()
 
     def _build_nx_graph(self):
         """简化版：构建无向图，只关注节点的联通性"""
@@ -31,7 +32,6 @@ class ThoughtPathFinder:
         
         G = nx.Graph()
         for src, tgt in edges:
-            # 调试：当节点涉及“柏拉图”时输出
             if src == "柏拉图" or tgt == "柏拉图":
                 print(f"DEBUG: 发现节点 {src} <-> {tgt}")
             G.add_edge(src, tgt)
@@ -60,8 +60,8 @@ class ThoughtPathFinder:
                 path_str.append(f"{u}->{v}({rel_type})")
             
             result = " -> ".join(path_str)
-            print(f"DEBUG: 最终计算出的路径是: {result}")  # 调试打印
-            return result  # 必须有这一行，不然上层拿不到数据
+            print(f"DEBUG: 最终计算出的路径是: {result}")
+            return result
 
         except (nx.NetworkXNoPath, nx.NodeNotFound):
             return "路径未找到"
@@ -70,7 +70,6 @@ class ThoughtPathFinder:
             conn.close()
 
 
-# --- 向后兼容的函数包装（返回路径字符串或'路径未找到'）---
 def get_thought_path(start_node, end_node):
     """保持原有的函数调用方式，返回路径字符串，失败返回'路径未找到'"""
     finder = ThoughtPathFinder()
@@ -78,6 +77,5 @@ def get_thought_path(start_node, end_node):
 
 
 if __name__ == "__main__":
-    # 测试：使用函数方式
     result = get_thought_path("柏拉图", "亚里士多德")
     print("最终结果：", result)
