@@ -6,11 +6,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <!-- Mermaid 图表库 -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
-    </script>
     
     <style>
         /* --- 1. 核心美学：100% 同步知识库 --- */
@@ -37,14 +32,14 @@
         nav a { color: #aaa; text-decoration: none; padding: 12px 20px; font-size: 10px; transition: 0.3s; font-family: 'Press Start 2P' !important; }
         nav a:hover, nav a.active { color: #facc15; text-shadow: 2px 2px 0px #000; }
 
-        /* --- 2. 实验室格栅布局：确保左 2/3 右 1/3 --- */
-        .lab-container {
+        /* --- 2. 修正后的格栅布局：允许模块跨列 --- */
+        .lab-grid { 
             display: grid; 
-            grid-template-columns: 1fr 380px;
+            grid-template-columns: 1fr 380px; 
             gap: 40px; 
             max-width: 1400px; 
             margin: 40px auto; 
-            padding: 0 40px; 
+            padding: 0 30px; 
             position: relative; 
             z-index: 10;
         }
@@ -61,6 +56,11 @@
             position: absolute; top: -10px; left: 20px;
             background: #0000ff; color: #fff; padding: 2px 8px;
             font-size: 8px; font-family: 'Press Start 2P';
+        }
+
+        /* 关键：让第三个模块占满整行 */
+        .full-width-station {
+            grid-column: 1 / -1; /* 跨越所有列，对齐右侧看板宽度 */
         }
 
         .label-sm { font-size: 13px; color: #60a5fa; margin-bottom: 8px; }
@@ -95,21 +95,75 @@
             font-family: 'Microsoft YaHei', sans-serif !important;
         }
 
-        /* 还原 PROFILE 卡片的重点强调色 */
+        /* 文字排版精修 */
+        .md-content h3 {
+            font-size: 18px;
+            color: #facc15;
+            border-left: 4px solid #facc15;
+            padding-left: 15px;
+            margin: 30px 0 15px 0;
+            letter-spacing: 1px;
+        }
+        .md-content p {
+            margin-bottom: 1.5rem;
+            text-align: justify;
+            color: #d1d5db;
+        }
         .md-content strong {
             color: #facc15 !important;
-            font-weight: bold !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            background: rgba(250, 204, 21, 0.1);
+            padding: 0 4px;
+            font-weight: bold;
         }
 
-        /* 修复 Mermaid 容器，防止它撑破页面 */
-        .mermaid {
-            background: rgba(255, 255, 255, 0.03) !important;
-            padding: 20px !important;
-            margin-bottom: 30px !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow-x: auto;
+        /* --- 概念流变报告专属样式 (精装修) --- */
+        #res-evolve {
+            border: 2px solid #22c55e; /* 绿色边框区分 */
+            background: rgba(0, 20, 0, 0.4);
+            box-shadow: 8px 8px 0px rgba(34, 197, 94, 0.2);
         }
+
+        /* 报告大标题 */
+        #res-evolve h2 {
+            font-size: 24px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #22c55e;
+            letter-spacing: 2px;
+        }
+
+        /* 时代小标题 */
+        #res-evolve h3 {
+            font-size: 18px;
+            color: #22c55e; /* 绿色标题 */
+            margin: 30px 0 15px 0;
+            padding-left: 12px;
+            border-left: 4px solid #22c55e;
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        /* 报告正文 */
+        #res-evolve p {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        /* 核心关键词高亮 (黄色加粗) */
+        #res-evolve strong {
+            color: #facc15 !important;
+            font-weight: bold;
+            background: rgba(250, 204, 21, 0.1);
+            padding: 0 4px;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* 段落间增加呼吸感 */
+        #res-evolve br { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -127,7 +181,7 @@
     </nav>
 
     <!-- 核心格栅容器 -->
-    <div class="lab-container">
+    <div class="lab-grid">
         
         <!-- 左侧：主要实验工作区 -->
         <main>
@@ -183,11 +237,11 @@
 
             <div class="deco-frame h-40"><img id="deco-2" src=""></div>
 
-            <!-- 实验台 C: 概念流变 -->
-            <section class="station-card">
+            <!-- 实验台 C: 概念流变 (加上了全宽类名) -->
+            <section class="station-card full-width-station">
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <div class="label-sm pixel-font">AGENT: LOGIC_EVOLUTION</div>
+                        <div class="label-sm pixel-font">INSTRUMENT: LOGIC_EVOLUTION</div>
                         <h2 class="title-md">概念流变推演</h2>
                     </div>
                     <div class="manual-text text-right">追踪词汇在哲学史中<br>随时间产生的定义偏移。</div>
@@ -196,7 +250,7 @@
                     <input id="input-evolve" class="lab-input" placeholder="输入核心词（如：自由）...">
                     <button onclick="handleEvolution()" class="lab-btn pixel-font">EVOLVE</button>
                 </div>
-                <div id="res-evolve" class="mt-8 hidden bg-black/40 p-8 border-l-2 border-green-500 md-content"></div>
+                <div id="res-evolve" class="mt-8 hidden bg-black/40 p-10 border-l-2 border-green-500 md-content"></div>
             </section>
         </main>
 
@@ -223,7 +277,7 @@
             </div>
         </aside>
 
-    </div> <!-- 结束 lab-container -->
+    </div> <!-- 结束 lab-grid -->
 
     <script>
         const API_BASE = "https://sophia-api-production-e49c.up.railway.app/sophia/api";
@@ -365,13 +419,13 @@
             }
         }
 
-        // --- 4. 实验台 C: 概念流变 (集成 Mermaid 图表) ---
+        // --- 4. 实验台 C: 概念流变 (净化星号 + 样式渲染) ---
         async function handleEvolution() {
             const val = document.getElementById('input-evolve').value;
             const resBox = document.getElementById('res-evolve');
             if(!val) return;
 
-            resBox.innerHTML = "<div class='text-green-400 animate-pulse text-[13px]'>分析语义历史轨迹中...</div>";
+            resBox.innerHTML = "<div class='text-green-400 animate-pulse text-[13px]'>正在追溯历史逻辑...</div>";
             resBox.classList.remove('hidden');
             updateSophia(`正在追溯“${val}”在不同时代的定义演变...`);
 
@@ -382,30 +436,20 @@
                     body: JSON.stringify({action: "evolve", query: val}) 
                 });
                 const data = await res.json();
+                
+                // --- 逻辑优化 ---
                 let content = data.evolution;
+                
+                // 1. 自动清理可能存在的星号（多重保险）
+                content = content.replace(/\*/g, '');
+                
+                // 2. 渲染 (marked 会处理 AI 返回的 <h2>, <h3> 和 <p> 标签)
+                resBox.innerHTML = marked.parse(content);
 
-                // 1. 强力清理：去掉 AI 可能带出的 Markdown 代码块标记 (```mermaid)
-                content = content.replace(/```mermaid/g, "").replace(/```/g, "");
-
-                // 2. 提取图表与文本
-                const graphMatch = content.match(/(graph LR[\s\S]*?)(?=\n[^\s])/);
-                let mermaidHtml = "";
-                let textHtml = content;
-
-                if (graphMatch) {
-                    mermaidHtml = `<pre class="mermaid">${graphMatch[1].trim()}</pre>`;
-                    textHtml = content.replace(graphMatch[1], "");
-                }
-
-                // 3. 渲染
-                resBox.innerHTML = mermaidHtml + `<div class="md-content">${marked.parse(textHtml)}</div>`;
-
-                // 4. 触发 Mermaid 渲染
-                if (mermaidHtml) {
-                    await mermaid.run({
-                        nodes: document.querySelectorAll('.mermaid'),
-                    });
-                }
+                // 3. 滚动到该位置
+                resBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                status.innerText = "推演报告已生成。";
+                updateSophia("这是一份基于跨时代语料的深度报告，请注意观察关键词的定义偏移。");
 
             } catch (e) { 
                 console.error(e);
