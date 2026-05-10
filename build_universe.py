@@ -69,7 +69,7 @@ def generate_unified_universe():
             .pixel-font {{ font-family: 'Press Start 2P', cursive !important; image-rendering: pixelated; text-transform: uppercase; }}
             .noise-overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url("https://media.giphy.com/media/oEI9uWUicfG5m/giphy.gif"); opacity: 0.03; pointer-events: none; z-index: 999; }}
             .crt-overlay {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 4px, 4px 100%; pointer-events: none; z-index: 1000; }}
-            .page-bg {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-position: center center; background-size: cover; filter: blur(4px) brightness(0.2); z-index: 0; transition: opacity 0.5s ease-in-out; }}
+            .page-bg {{ position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-position: center center; background-size: cover; filter: blur(4px) brightness(0.2); z-index: 0; transition: opacity 0.2s ease-in-out; }}
 
             .unified-panel {{
                 position: fixed; top: 80px; width: 380px; max-height: 80vh;
@@ -196,7 +196,7 @@ def generate_unified_universe():
                             bgEl.style.backgroundImage = `url('${{data.image_path}}')`;
                             // 3. 换图后让背景恢复不透明（触发 CSS 的 transition 淡入）
                             bgEl.style.opacity = 1;
-                        }}, 500);
+                        }}, 200);
                     }}
                 }} catch(e) {{
                     console.error("背景刷新失败:", e);

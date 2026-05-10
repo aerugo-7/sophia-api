@@ -26,7 +26,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-repeat: no-repeat; background-position: center center; background-size: cover; 
             filter: blur(4px) brightness(0.2); z-index: 0; 
-            transition: opacity 0.5s ease-in-out; /* 背景切换丝滑过渡 */
+            transition: opacity 0.2s ease-in-out; /* 背景切换加速 */
         }
 
         /* --- 卡片通用样式 (Bento Grid) --- */
@@ -51,10 +51,10 @@
 
         /* 淡出+轻微缩小 */
         .flip-out {
-            animation: fadeOutScale 0.3s ease forwards;
+            animation: fadeOutScale 0.2s ease forwards; /* 加速动画 */
         }
         .flip-in {
-            animation: fadeInScale 0.3s ease forwards;
+            animation: fadeInScale 0.2s ease forwards; /* 加速动画 */
         }
         @keyframes fadeOutScale {
             0% { opacity: 1; transform: scale(1); }
@@ -250,23 +250,33 @@
     <script>
         const API_BASE = "https://sophia-api-production-e49c.up.railway.app/sophia/api";
 
-        // 工具函数：为 DOM 元素触发翻转动画
+        // 工具函数：触发翻转动画，同时并行发起数据请求
         function triggerFlipAnimation(elementId, updateCallback) {
             const el = document.getElementById(elementId);
-            // 移除旧动画，触发重新重绘
+            // 清除旧动画类
             el.classList.remove('flip-in', 'flip-out');
             void el.offsetWidth; 
             
-            // 执行翻出动画
+            // 立即播放翻出动画
             el.classList.add('flip-out');
             
-            // 在翻出动画结束（画面消失）时，更新数据，然后执行翻入动画
-            setTimeout(() => {
-                updateCallback().then(() => {
+            // 同时立刻开始请求数据（动画和请求并行）
+            const requestPromise = updateCallback();
+            
+            // 当请求完成时，播放翻入动画（此时翻出动画可能还在进行或已完成）
+            requestPromise.then(() => {
+                // 确保翻出动画结束（如果还在进行，用极短的延迟等待）
+                setTimeout(() => {
                     el.classList.remove('flip-out');
                     el.classList.add('flip-in');
-                });
-            }, 300); // 必须与 CSS 动画时长一致
+                }, 50); // 极短缓冲，视觉更连贯
+            }).catch(() => {
+                // 即使出错也播放翻入
+                setTimeout(() => {
+                    el.classList.remove('flip-out');
+                    el.classList.add('flip-in');
+                }, 50);
+            });
         }
 
         // --- 数据获取与渲染逻辑 ---
@@ -395,7 +405,7 @@
             } catch (e) { console.error(e); }
         }
 
-        // --- 动态背景刷新逻辑 ---
+        // --- 动态背景刷新逻辑 (加速) ---
         async function fetchBackground() {
             try {
                 const res = await fetch(API_BASE, { 
@@ -405,14 +415,13 @@
                 });
                 const data = await res.json();
                 if(data.image_path) {
-                    // 为背景切换增加平滑的渐变过渡效果
                     const bgEl = document.getElementById('dynamic-bg');
                     bgEl.style.opacity = 0; // 先变黑
                     
                     setTimeout(() => {
                         bgEl.style.backgroundImage = `url('${data.image_path}')`;
                         bgEl.style.opacity = 1; // 再亮起
-                    }, 500);
+                    }, 200); // 由500ms改为200ms
                 }
             } catch (e) { console.error(e); }
         }
