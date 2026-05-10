@@ -2,430 +2,416 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOPHIA - KNOWLEDGE BASE</title>
-    <!-- Tailwind CSS -->
+    <title>SOPHIA - AGENT LAB</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Markdown 解析库，用于处理 *加粗* -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 像素字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 全局与复古设定 --- */
+        /* --- 1. 核心美学：100% 同步知识库 --- */
         * { box-sizing: border-box; }
         body, html { width: 100%; min-height: 100%; background-color: #050510; color: #d1d5db; margin: 0; font-family: 'Microsoft YaHei', serif; }
         .pixel-font { font-family: 'Press Start 2P', cursive !important; image-rendering: pixelated; text-transform: uppercase; }
         
-        /* 覆盖层：噪点与CRT扫描线 */
         .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url("https://media.giphy.com/media/oEI9uWUicfG5m/giphy.gif"); opacity: 0.03; pointer-events: none; z-index: 999; }
         .crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 4px, 4px 100%; pointer-events: none; z-index: 1000; }
-        
-        /* 页面背景（动态加载） */
-        .page-bg { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-repeat: no-repeat; background-position: center center; background-size: cover; 
-            filter: blur(4px) brightness(0.2); z-index: 0; 
-            transition: opacity 0.5s ease-in-out; /* 背景切换丝滑过渡 */
-        }
+        .page-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-position: center center; background-size: cover; filter: blur(4px) brightness(0.3); z-index: 0; transition: opacity 0.5s; }
 
-/* --- 修正后的卡片样式 --- */
-        .pixel-card {
-            position: relative; 
-            background: rgba(15, 15, 20, 0.85); 
-            backdrop-filter: blur(8px);
-            border: 2px solid #3b82f6; 
-            box-shadow: 6px 6px 0px rgba(0, 0, 255, 0.3);
-            padding: 24px; 
-            display: flex; 
-            flex-direction: column;
-            /* 确保高度被锁定，超出部分滚动 */
-            overflow-y: auto !important; 
-            height: 100%; /* 继承父容器高度 */
-        }        
-
-        /* 强制美化滚动条，使其更明显 */
-        .pixel-card::-webkit-scrollbar {
-            width: 6px;
+        /* 统一刷新按钮与导航栏 */
+        .refresh-btn-sync {
+            position: fixed; top: 1rem; left: 1rem; z-index: 1001;
+            background-color: #111827; color: #eab308; border: 2px solid #eab308;
+            padding: 0.5rem 0.75rem; font-size: 0.75rem; cursor: pointer;
+            box-shadow: 4px 4px 0px 0px #000; transition: 0.2s;
         }
-        .pixel-card::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
+        .refresh-btn-sync:hover {
+            background-color: #eab308;
+            color: #000;
         }
-        .pixel-card::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border: 1px solid #ffffff;
-        }
-        /* 响应式：在手机端也允许滚动 */
-        @media (max-width: 768px) {
-            .pixel-card { max-height: 400px; }
-        }
-        /* 修复内部图片的尺寸，防止它挤占文字空间 */
-        .pixel-card img {
-            max-height: 150px; 
-            object-fit: contain; 
-            margin-bottom: 15px;
-            flex-shrink: 0; /* 禁止图片被压缩 */
-        }
-
-        .pixel-card:hover { box-shadow: 6px 6px 0px rgba(250, 204, 21, 0.6); border-color: #facc15; }
-        
-        /* 特定板块颜色区分 */
-        .card-red { border-color: #ef4444; box-shadow: 6px 6px 0px rgba(239, 68, 68, 0.3); }
-        .card-yellow { border-color: #facc15; box-shadow: 6px 6px 0px rgba(250, 204, 21, 0.3); }
-
-        /* --- Update 按钮与翻转动画 --- */
-        .update-btn {
-            position: absolute; top: 10px; right: 10px; background: #1e3a8a; color: #fff;
-            border: 2px solid #fff; padding: 4px 8px; font-size: 8px; cursor: pointer;
-            transition: all 0.2s; z-index: 10;
-        }
-        .update-btn:hover { background: #facc15; color: #000; }
-
-        /* 淡出+轻微缩小 */
-        .flip-out {
-            animation: fadeOutScale 0.3s ease forwards;
-        }
-        .flip-in {
-            animation: fadeInScale 0.3s ease forwards;
-        }
-        @keyframes fadeOutScale {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.95); }
-        }
-        @keyframes fadeInScale {
-            0% { opacity: 0; transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Markdown 渲染样式强化 */
-        .md-content strong { color: #facc15; font-weight: bold; text-shadow: 1px 1px 0px #000; }
-        .md-content em { color: #60a5fa; font-style: normal; border-bottom: 1px dashed #60a5fa; }
-        
-        /* 思想八卦专用的圆形卡片容器 */
-        .gossip-circle { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #ef4444; object-fit: cover; }
-        .gossip-line { height: 2px; flex-grow: 1; background: repeating-linear-gradient(90deg, #ef4444, #ef4444 4px, transparent 4px, transparent 8px); }
-
-        /* 顶部导航栏 */
-        nav { background: rgba(0,0,0,0.8); border-bottom: 2px solid #3b82f6; }
-        nav a { color: #aaa; text-decoration: none; padding: 10px 15px; font-size: 10px; transition: 0.3s; }
+        nav { background: rgba(0,0,0,0.8); border-bottom: 2px solid #3b82f6; position: sticky; top: 0; width: 100%; z-index: 50; }
+        nav a { color: #aaa; text-decoration: none; padding: 12px 20px; font-size: 10px; transition: 0.3s; font-family: 'Press Start 2P' !important; }
         nav a:hover, nav a.active { color: #facc15; text-shadow: 2px 2px 0px #000; }
+
+        /* --- 2. 修正后的格栅布局：允许模块跨列 --- */
+        .lab-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 380px; 
+            gap: 40px; 
+            max-width: 1400px; 
+            margin: 40px auto; 
+            padding: 0 30px; 
+            position: relative; 
+            z-index: 10;
+        }
+
+        .station-card {
+            background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(12px);
+            border: 2px solid #ffffff; box-shadow: 12px 12px 0px #0000ff;
+            padding: 35px; margin-bottom: 50px;
+            position: relative;
+            counter-increment: section;
+        }
+        .station-card::before {
+            content: "LAB_SEC_0" counter(section);
+            position: absolute; top: -10px; left: 20px;
+            background: #0000ff; color: #fff; padding: 2px 8px;
+            font-size: 8px; font-family: 'Press Start 2P';
+        }
+
+        /* 关键：让第三个模块占满整行 */
+        .full-width-station {
+            grid-column: 1 / -1; /* 跨越所有列，对齐右侧看板宽度 */
+        }
+
+        .label-sm { font-size: 13px; color: #60a5fa; margin-bottom: 8px; }
+        .title-md { font-size: 22px; font-weight: bold; color: #fff; margin-bottom: 20px; }
+        .manual-text { font-size: 13px; color: #9ca3af; line-height: 1.6; }
+
+        .lab-input { width: 100%; background: #000; border: 2px solid #3b82f6; padding: 15px; color: #00ffff; font-size: 16px; outline: none; }
+        .lab-btn { background: #1e3a8a; color: white; padding: 12px 25px; font-size: 12px; border: 2px solid #fff; cursor: pointer; }
+
+        /* 对垒区样式 */
+        .debate-row { display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start; }
+        .philo-avatar { 
+            width: 80px; height: 80px; 
+            border: 2px solid #fff; 
+            box-shadow: 6px 6px 0px #0000ff; 
+            background: #111;
+            object-fit: cover;
+        }
+        .philo-avatar.border-blue-500 { border-color: #3b82f6; box-shadow: 4px 4px 0px #1e3a8a; }
+        .philo-avatar.border-red-500 { border-color: #ef4444; box-shadow: 4px 4px 0px #7f1d1d; }
+        .bubble { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 4px; font-size: 15px; line-height: 1.8; flex: 1; border-left: 4px solid #facc15; }
+        .bubble-right { border-left: none; border-right: 4px solid #ef4444; text-align: right; }
+
+        .deco-frame { border: 1px solid #ffffff; box-shadow: 6px 6px 0px #0000ff; overflow: hidden; background: #000; margin-bottom: 30px; }
+        .deco-frame img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* 强制还原正文字体与高亮样式 */
+        .md-content {
+            font-size: 15px !important;
+            line-height: 1.8 !important;
+            color: #d1d5db !important;
+            font-family: 'Microsoft YaHei', sans-serif !important;
+        }
+
+        /* 文字排版精修 */
+        .md-content h3 {
+            font-size: 18px;
+            color: #facc15;
+            border-left: 4px solid #facc15;
+            padding-left: 15px;
+            margin: 30px 0 15px 0;
+            letter-spacing: 1px;
+        }
+        .md-content p {
+            margin-bottom: 1.5rem;
+            text-align: justify;
+            color: #d1d5db;
+        }
+        .md-content strong {
+            color: #facc15 !important;
+            background: rgba(250, 204, 21, 0.1);
+            padding: 0 4px;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body class="relative min-h-screen pb-20">
-    <!-- 全局背景刷新按钮 (左上角悬浮) -->
-    <button onclick="refreshBackground()" class="fixed top-4 left-4 z-[1001] pixel-font bg-gray-900 text-yellow-500 border-2 border-yellow-500 px-3 py-2 text-xs hover:bg-yellow-500 hover:text-black transition-colors cursor-pointer shadow-[4px_4px_0_0_#000]">
-        REFRESH BACKGROUND
-    </button>
+<body>
+    <div id="dynamic-bg" class="page-bg"></div>
+    <div class="noise-overlay"></div><div class="crt-overlay"></div>
 
-    <!-- 动态背景层 (去掉了 CSS 中的静态绑定) -->
-    <div id="dynamic-bg" class="page-bg" style="background-image: url('static/pic/bg.png');"></div>
+    <button class="refresh-btn-sync pixel-font" onclick="refreshAssets()">REFRESH BACKGROUND</button>
 
-    <div class="noise-overlay"></div>
-    <div class="crt-overlay"></div>
-
-    <!-- 导航栏 -->
-    <nav class="sticky top-0 w-full z-50 flex justify-center py-4 pixel-font shadow-lg backdrop-blur-md">
-        <a href="index.html" class="hover:text-yellow-400">HOME</a>
-        <a href="knowledge_base.html" class="active">KNOWLEDGE</a>
+    <nav class="flex justify-center py-4 shadow-lg">
+        <a href="index.html">HOME</a>
+        <a href="knowledge_base.html">KNOWLEDGE</a>
         <a href="gallery.html">GALLERY</a>
         <a href="universe.html">UNIVERSE</a>
-        <a href="agent_lab.html">LAB</a>
+        <a href="agent_lab.html" class="active">LAB</a>
     </nav>
 
-    <!-- 主体网格布局 -->
-    <div class="max-w-7xl mx-auto mt-8 px-6 space-y-6 relative z-10">
+    <!-- 核心格栅容器 -->
+    <div class="lab-grid">
         
-        <!-- Row 1: 金句 (1/4) | 核心插图 (2/4) | 杂谈 (1/4) -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- 金句模块 -->
-            <div id="card-quotes" class="pixel-card card-yellow col-span-1 flex flex-col h-96">
-                <button class="pixel-font update-btn" onclick="refreshCard('quotes')">UPDATE</button>
-                <h3 class="pixel-font text-yellow-400 mb-4 text-xs"># DAILY QUOTES</h3>
-                <div id="content-quotes" class="flex-1 overflow-y-auto space-y-4 md-content text-sm">
-                    <!-- 内容由JS注入 -->
+        <!-- 左侧：主要实验工作区 -->
+        <main>
+            <!-- 实验 A -->
+            <section class="station-card">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="label-sm pixel-font">AGENT: RAG_RETRIEVER</div>
+                        <h2 class="title-md">原著语义匹配</h2>
+                    </div>
+                    <div class="manual-text text-right">从 6.3 万条语料库中<br>匹配语义最接近的原文。</div>
+                </div>
+                <div class="flex gap-4">
+                    <input id="input-search" class="lab-input" placeholder="输入任何哲学感悟...">
+                    <button onclick="handleSearch()" class="lab-btn pixel-font">MATCH</button>
+                </div>
+                <div id="res-search" class="mt-8 hidden bg-black/40 p-6 border-l-2 border-blue-500 space-y-6"></div>
+            </section>
+
+            <div class="deco-frame h-40"><img id="deco-1" src=""></div>
+
+            <!-- 实验 B：思想实验模拟器 -->
+            <section class="station-card">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="label-sm pixel-font">AGENT: DIALECTIC_ARENA</div>
+                        <h2 class="title-md">逻辑冲突模拟器</h2>
+                    </div>
+                    <div class="manual-text text-right">选取实验并决策，<br>召集先贤进行逻辑审判。</div>
+                </div>
+
+                <div class="flex gap-8 mb-8 bg-black/60 p-6 border border-white/20">
+                    <div class="w-40 h-40 flex-shrink-0 deco-frame !m-0">
+                        <img id="exp-img" src="">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h4 id="exp-name" class="text-xl text-yellow-500 font-bold mb-2">正在载入...</h4>
+                        <p id="exp-desc" class="text-[13px] text-gray-400 leading-relaxed italic"></p>
+                        <button onclick="loadRandomExp()" class="text-[12px] text-blue-400 underline mt-4 text-left pixel-font">SWITCH [换一个]</button>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <input id="input-exp" class="lab-input" placeholder="针对此困境，你的最终决策是？">
+                    <button onclick="handleSimulation()" class="lab-btn pixel-font">SIMULATE</button>
+                </div>
+
+                <!-- 【核心】对垒结果展示区 -->
+                <div id="res-exp" class="mt-10 hidden border-t border-white/10 pt-10 space-y-10">
+                    <!-- 这里由 JS 注入两个对话气泡 -->
+                </div>
+            </section>
+
+            <div class="deco-frame h-40"><img id="deco-2" src=""></div>
+
+            <!-- 实验台 C: 概念流变 (加上了全宽类名) -->
+            <section class="station-card full-width-station">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <div class="label-sm pixel-font">INSTRUMENT: LOGIC_EVOLUTION</div>
+                        <h2 class="title-md">概念流变推演</h2>
+                    </div>
+                    <div class="manual-text text-right">追踪词汇在哲学史中<br>随时间产生的定义偏移。</div>
+                </div>
+                <div class="flex gap-4">
+                    <input id="input-evolve" class="lab-input" placeholder="输入核心词（如：自由）...">
+                    <button onclick="handleEvolution()" class="lab-btn pixel-font">EVOLVE</button>
+                </div>
+                <div id="res-evolve" class="mt-8 hidden bg-black/40 p-10 border-l-2 border-green-500 md-content"></div>
+            </section>
+        </main>
+
+        <!-- 右侧：辅助看板与 Sophia 助手 -->
+        <aside class="space-y-8">
+            <div class="station-card !p-6" style="box-shadow: 8px 8px 0px #0000ff; margin-bottom: 0;">
+                <div class="label-sm pixel-font text-yellow-500">LAB ASSISTANT</div>
+                <div id="sophia-talk" class="text-sm italic text-gray-300 leading-loose border-l-2 border-yellow-600 pl-4">
+                    "系统链路正常。请选择一个实验台开始推演。"
                 </div>
             </div>
-
-            <!-- 核心配图模块 -->
-            <div id="card-main-pic" class="pixel-card col-span-2 p-2 h-96 flex items-center justify-center bg-black">
-                <button class="pixel-font update-btn" onclick="refreshCard('main-pic')">UPDATE</button>
-                <img id="content-main-pic" src="" alt="Decoration" class="w-full h-full object-cover border-2 border-gray-700 opacity-80 hover:opacity-100 transition-opacity">
+            
+            <div class="deco-frame aspect-square">
+                <img id="side-asset" src="">
             </div>
 
-            <!-- 杂谈模块 -->
-            <div id="card-stories" class="pixel-card col-span-1 flex flex-col h-96">
-                <button class="pixel-font update-btn" onclick="refreshCard('stories')">UPDATE</button>
-                <h3 class="pixel-font text-blue-400 mb-4 text-xs"># SHORT TALES</h3>
-                <div id="content-stories" class="flex-1 overflow-y-auto space-y-4 md-content text-sm">
-                    <!-- 内容由JS注入 -->
+            <div class="station-card !p-6 bg-blue-900/10 border-blue-800">
+                <div class="label-sm pixel-font">DATA METRICS</div>
+                <div class="manual-text space-y-4">
+                    <p>● 语料库：63,464 条标记碎片</p>
+                    <p>● 关系网：2,750 条拓扑连线</p>
+                    <p>● 算法：1024D 向量空间检索</p>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- Row 2: 哲学家画像 (2/3) | 学个概念 (1/3) -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div id="card-philosopher" class="pixel-card col-span-2 flex flex-row h-72">
-                <button class="pixel-font update-btn" onclick="refreshCard('philosopher')">UPDATE</button>
-                <div class="w-1/3 flex flex-col items-center justify-center border-r border-gray-700 pr-6">
-                    <img id="content-philo-img" src="" class="w-40 h-40 object-cover border-2 border-yellow-500 mb-4 shadow-[4px_4px_0_0_rgba(250,204,21,0.5)]">
-                    <h3 id="content-philo-name" class="font-bold text-xl text-white tracking-widest text-center"></h3>
-                    <span id="content-philo-era" class="text-xs text-gray-500 mt-1"></span>
-                </div>
-                <div class="w-2/3 pl-6 overflow-y-auto md-content flex flex-col justify-center">
-                    <h3 class="pixel-font text-yellow-400 mb-3 text-xs"># PROFILE</h3>
-                    <div id="content-philo-desc" class="text-sm leading-relaxed text-gray-300"></div>
-                </div>
-            </div>
-
-            <div id="card-concept" class="pixel-card col-span-1 h-72 flex flex-col">
-                <button class="pixel-font update-btn" onclick="refreshCard('concept')">UPDATE</button>
-                <h3 class="pixel-font text-green-400 mb-4 text-xs"># CORE TOPIC</h3>
-                <h4 id="content-concept-name" class="text-lg font-bold text-white mb-2"></h4>
-                <div id="content-concept-desc" class="md-content text-sm overflow-y-auto text-gray-400"></div>
-            </div>
-        </div>
-
-        <!-- Row 3: 时代流变 (1/2) | 流派展示 (1/2) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div id="card-era" class="pixel-card p-0 h-64 relative group">
-                <button class="pixel-font update-btn" onclick="refreshCard('era')">UPDATE</button>
-                <img id="content-era-bg" src="" class="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent p-6 flex flex-col justify-end">
-                    <h3 class="pixel-font text-purple-400 mb-2 text-xs"># ERA EVOLUTION</h3>
-                    <h4 id="content-era-name" class="text-xl font-bold text-white mb-2"></h4>
-                    <div id="content-era-desc" class="md-content text-xs text-gray-300 line-clamp-3"></div>
-                </div>
-            </div>
-
-            <div id="card-school" class="pixel-card h-64 flex items-center">
-                <button class="pixel-font update-btn" onclick="refreshCard('school')">UPDATE</button>
-                <img id="content-school-icon" src="" class="w-32 h-32 mr-6 border-2 border-blue-500">
-                <div class="flex-1">
-                    <h3 class="pixel-font text-blue-400 mb-2 text-xs"># SCHOOL OF THOUGHT</h3>
-                    <h4 id="content-school-name" class="text-xl font-bold text-white mb-2"></h4>
-                    <div id="content-school-desc" class="md-content text-xs text-gray-400 line-clamp-4"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Row 4: 思想八卦 (圆形社交链) -->
-        <div id="card-gossip" class="pixel-card card-red w-full py-8">
-            <button class="pixel-font update-btn" onclick="refreshCard('gossip')">UPDATE</button>
-            <h3 class="pixel-font text-red-400 mb-6 text-xs text-center"># PHILO GOSSIP</h3>
-            <div class="flex items-center justify-center max-w-4xl mx-auto px-4">
-                <div class="flex flex-col items-center">
-                    <img id="gossip-img-1" src="" class="gossip-circle">
-                    <span id="gossip-name-1" class="mt-2 text-xs font-bold text-white"></span>
-                </div>
-                <div class="gossip-line mx-4 relative">
-                    <div id="gossip-relation" class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-red-900 text-white px-3 py-1 rounded text-xs whitespace-nowrap"></div>
-                </div>
-                <div class="flex flex-col items-center">
-                    <img id="gossip-img-2" src="" class="gossip-circle">
-                    <span id="gossip-name-2" class="mt-2 text-xs font-bold text-white"></span>
-                </div>
-            </div>
-            <div id="gossip-desc" class="text-center mt-6 text-sm md-content text-gray-400 max-w-2xl mx-auto"></div>
-        </div>
-
-        <!-- Row 5: 思想实验 -->
-        <div id="card-experiment" class="pixel-card card-red flex h-80 p-0">
-            <button class="pixel-font update-btn" onclick="refreshCard('experiment')">UPDATE</button>
-            <div class="w-1/3 bg-black">
-                <img id="content-exp-img" src="" class="w-full h-full object-cover opacity-80">
-            </div>
-            <div class="w-2/3 p-8 flex flex-col justify-center">
-                <h3 class="pixel-font text-red-400 mb-4 text-xs"># THOUGHT EXPERIMENT</h3>
-                <h4 id="content-exp-name" class="text-2xl font-bold text-white mb-4"></h4>
-                <div id="content-exp-desc" class="md-content text-sm text-gray-300 leading-relaxed overflow-y-auto"></div>
-            </div>
-        </div>
-
-    </div>
+    </div> <!-- 结束 lab-grid -->
 
     <script>
         const API_BASE = "https://sophia-api-production-e49c.up.railway.app/sophia/api";
+        let currentExpName = "";
 
-        // 工具函数：为 DOM 元素触发翻转动画
-        function triggerFlipAnimation(elementId, updateCallback) {
-            const el = document.getElementById(elementId);
-            // 移除旧动画，触发重新重绘
-            el.classList.remove('flip-in', 'flip-out');
-            void el.offsetWidth; 
-            
-            // 执行翻出动画
-            el.classList.add('flip-out');
-            
-            // 在翻出动画结束（画面消失）时，更新数据，然后执行翻入动画
-            setTimeout(() => {
-                updateCallback().then(() => {
-                    el.classList.remove('flip-out');
-                    el.classList.add('flip-in');
+        // --- 1. 素材初始化 (背景与随机装饰图) ---
+        async function refreshAssets() {
+            try {
+                // 刷新背景（带渐隐渐显）
+                const resBg = await fetch(API_BASE, { 
+                    method: 'POST', headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "get_decoration", query:""}) 
                 });
-            }, 300); // 必须与 CSS 动画时长一致
-        }
-
-        // --- 数据获取与渲染逻辑 ---
-
-        async function fetchQuotes() {
-            try {
-                // 向 unified_api 请求 3 条金句
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_content", params: { type: "金句", limit: 3 }}) });
-                const data = await res.json();
-                let html = "";
-                data.data.forEach(item => {
-                    // 使用 marked.parse 解析 markdown
-                    html += `<div class="border-l-2 border-yellow-600 pl-3 mb-4"><div class="italic text-gray-300">"${marked.parseInline(item.text)}"</div><div class="text-right text-xs text-yellow-600 mt-1">— ${item.author} 《${item.title}》</div></div>`;
-                });
-                document.getElementById('content-quotes').innerHTML = html;
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchStories() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_content", params: { type: "小故事", limit: 3 }}) });
-                const data = await res.json();
-                let html = "";
-                data.data.forEach(item => {
-                    html += `<div class="bg-gray-800 p-3 rounded mb-3"><div class="text-gray-300 text-xs">${marked.parseInline(item.text)}</div></div>`;
-                });
-                document.getElementById('content-stories').innerHTML = html;
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchMainPic() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_decoration" }) });
-                const data = await res.json();
-                if(data.image_path) {
-                    document.getElementById('content-main-pic').src = data.image_path;
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchPhilosopher() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "philosopher" }}) });
-                const data = await res.json();
-                document.getElementById('content-philo-name').innerText = data.name;
-                document.getElementById('content-philo-era').innerText = data.era;
-                document.getElementById('content-philo-desc').innerHTML = marked.parse(data.description || "无记录");
-                document.getElementById('content-philo-img').src = `static/avatars/avatar_${data.id}.png`;
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchConcept() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "topic" }}) });
-                const data = await res.json();
-                document.getElementById('content-concept-name').innerText = data.topic_name;
-                document.getElementById('content-concept-desc').innerHTML = marked.parse(data.description || "无记录");
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchEra() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "era" }}) });
-                const data = await res.json();
-                document.getElementById('content-era-name').innerText = data.name;
-                document.getElementById('content-era-desc').innerHTML = marked.parse(data.era_summary || "");
-                document.getElementById('content-era-bg').src = `static/eras/era_${data.id}.png`;
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchSchool() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "school" }}) });
-                const data = await res.json();
-                document.getElementById('content-school-name').innerText = data.name;
-                document.getElementById('content-school-desc').innerHTML = marked.parse(data.description || "");
-                document.getElementById('content-school-icon').src = `static/schools/school_${data.id}.png`;
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchGossip() {
-            try {
-                const res = await fetch(API_BASE, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ action: "get_random", params: { target: "gossip" }}) 
-                });
-                const data = await res.json();
-                
-                // 1. 设置名字
-                document.getElementById('gossip-name-1').innerText = data.source;
-                document.getElementById('gossip-name-2').innerText = data.target;
-                document.getElementById('gossip-relation').innerText = data.relation;
-                
-                // 2. 【关键修改】：使用 ID 拼接头像路径
-                document.getElementById('gossip-img-1').src = `static/avatars/avatar_${data.source_id}.png`;
-                document.getElementById('gossip-img-2').src = `static/avatars/avatar_${data.target_id}.png`;
-                
-                // 3. 渲染描述
-                document.getElementById('gossip-desc').innerHTML = marked.parse(data.description || "逻辑连通中...");
-            } catch (e) { console.error("Gossip 加载失败", e); }
-        }
-
-        async function fetchExperiment() {
-            try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "experiment" }}) });
-                const data = await res.json();
-                document.getElementById('content-exp-name').innerText = data.name;
-                document.getElementById('content-exp-desc').innerHTML = marked.parse(data.description || "");
-                document.getElementById('content-exp-img').src = `static/experiments/exp_${data.id}.png`;
-            } catch (e) { console.error(e); }
-        }
-
-        // --- 动态背景刷新逻辑 ---
-        async function fetchBackground() {
-            try {
-                const res = await fetch(API_BASE, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ action: "get_decoration" }) 
-                });
-                const data = await res.json();
-                if(data.image_path) {
-                    // 为背景切换增加平滑的渐变过渡效果
+                const dBg = await resBg.json();
+                if(dBg.image_path) {
                     const bgEl = document.getElementById('dynamic-bg');
-                    bgEl.style.opacity = 0; // 先变黑
-                    
+                    bgEl.style.opacity = 0;
                     setTimeout(() => {
-                        bgEl.style.backgroundImage = `url('${data.image_path}')`;
-                        bgEl.style.opacity = 1; // 再亮起
+                        bgEl.style.backgroundImage = `url('${dBg.image_path}')`;
+                        bgEl.style.opacity = 1;
                     }, 500);
                 }
-            } catch (e) { console.error(e); }
+                // 刷新三个随机装饰位
+                const ids = ['deco-1', 'deco-2', 'side-asset'];
+                for(let id of ids) {
+                    const r = await fetch(API_BASE, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action: "get_decoration", query:""}) });
+                    const d = await r.json();
+                    document.getElementById(id).src = d.image_path;
+                }
+            } catch (e) { console.error("Assets Loading Error", e); }
         }
 
-        // 绑定给左上角按钮
-        function refreshBackground() {
-            fetchBackground();
+        // --- 2. 实验台 A: 原著语义匹配 ---
+        async function handleSearch() {
+            const val = document.getElementById('input-search').value;
+            const resBox = document.getElementById('res-search');
+            if(!val) return;
+
+            resBox.innerHTML = "<div class='text-blue-400 animate-pulse text-[13px]'>正在扫描 6.3 万条语料指纹...</div>";
+            resBox.classList.remove('hidden');
+            updateSophia("正在为你匹配最接近的先贤思想原文...");
+
+            try {
+                const res = await fetch(API_BASE, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action: "search", query: val}) });
+                const response = await res.json();
+                const data = response.data || [];
+
+                let html = "";
+                data.slice(0, 3).forEach(item => {
+                    html += `
+                        <div class="mb-8 border-b border-white/5 pb-6 last:border-0">
+                            <div class="md-content text-gray-300 text-[15px]">${marked.parse(item.text)}</div>
+                            <div class="text-right text-[12px] text-yellow-600 mt-2">— ${item.author} 《${item.title}》</div>
+                        </div>`;
+                });
+                resBox.innerHTML = html || "语料库中暂无匹配项。";
+            } catch (e) { resBox.innerHTML = "检索链路异常。"; }
         }
 
-        // --- 全局控制与按钮绑定 ---
-
-        const cardUpdateMap = {
-            'quotes': fetchQuotes,
-            'stories': fetchStories,
-            'main-pic': fetchMainPic,
-            'philosopher': fetchPhilosopher,
-            'concept': fetchConcept,
-            'era': fetchEra,
-            'school': fetchSchool,
-            'gossip': fetchGossip,
-            'experiment': fetchExperiment
-        };
-
-        function refreshCard(cardKey) {
-            triggerFlipAnimation('card-' + cardKey, cardUpdateMap[cardKey]);
+        // --- 3. 实验台 B: 思想实验对垒 ---
+        async function loadRandomExp() {
+            try {
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "get_random", params: {target: "experiment"}}) 
+                });
+                const data = await res.json();
+                
+                currentExpName = data.name;
+                document.getElementById('exp-name').innerText = data.name;
+                document.getElementById('exp-desc').innerText = data.description;
+                
+                if(data.id) {
+                    document.getElementById('exp-img').src = `static/experiments/exp_${data.id}.png`;
+                }
+                
+                document.getElementById('res-exp').classList.add('hidden');
+            } catch (e) { console.error("载入实验失败", e); }
         }
 
-        // 页面初始化：加载所有数据 + 随机背景
+        async function handleSimulation() {
+            const val = document.getElementById('input-exp').value;
+            const resBox = document.getElementById('res-exp');
+            if(!val) return;
+
+            resBox.innerHTML = "<div class='text-center py-10 text-red-400 animate-pulse pixel-font text-xs'>召集先贤中... [CALLING PHILOSOPHERS]</div>";
+            resBox.classList.remove('hidden');
+            updateSophia("正在模拟跨时空的逻辑冲突，请稍候...");
+
+            try {
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "experiment", query: val, params: {name: currentExpName}}) 
+                });
+                const data = await res.json(); 
+
+                const parts = data.text.split('[VS]');
+                const philoA = data.philosophers[0] || {name: "支持方", id: 0};
+                const philoB = data.philosophers[1] || {name: "反对方", id: 0};
+
+                let html = `
+                    <div class="flex gap-8 items-start animate-fadeIn">
+                        <div class="flex flex-col gap-6 flex-shrink-0 sticky top-0">
+                            <div class="group">
+                                <img src="static/avatars/avatar_${philoA.id}.png" class="philo-avatar border-blue-500" onerror="this.src='static/pic/bg.png'">
+                                <div class="text-[10px] text-blue-400 text-center mt-2 font-bold">${philoA.name}</div>
+                            </div>
+                            <div class="group">
+                                <img src="static/avatars/avatar_${philoB.id}.png" class="philo-avatar border-red-500" onerror="this.src='static/pic/bg.png'">
+                                <div class="text-[10px] text-red-500 text-center mt-2 font-bold">${philoB.name}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 space-y-8">
+                            <div class="bg-blue-900/10 border-l-4 border-blue-500 p-6 shadow-lg">
+                                <div class="pixel-font text-[10px] text-blue-500 mb-3">[ POSITION: SUPPORT ]</div>
+                                <div class="md-content text-gray-200 text-[15px] leading-relaxed">
+                                    ${marked.parse(parts[0] || "正在组织逻辑...")}
+                                </div>
+                            </div>
+
+                            <div class="bg-red-900/10 border-l-4 border-red-500 p-6 shadow-lg">
+                                <div class="pixel-font text-[10px] text-red-500 mb-3">[ POSITION: OPPOSITION ]</div>
+                                <div class="md-content text-gray-200 text-[15px] leading-relaxed">
+                                    ${marked.parse(parts[1] || "正在寻找逻辑漏洞...")}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                resBox.innerHTML = html;
+                updateSophia("对垒完成。先贤们已完成逻辑交锋，你可点击 [换个实验] 继续。");
+            } catch (e) { 
+                console.error(e);
+                resBox.innerHTML = "<div class='p-4 text-red-500'>[ERROR] 逻辑链路断开，请检查后端 API。</div>"; 
+            }
+        }
+
+        // --- 4. 实验台 C: 概念流变 (回归纯粹 Markdown，去除 Mermaid) ---
+        async function handleEvolution() {
+            const val = document.getElementById('input-evolve').value;
+            const resBox = document.getElementById('res-evolve');
+            if(!val) return;
+
+            resBox.innerHTML = "<div class='text-green-400 animate-pulse text-[13px]'>正在追溯历史逻辑...</div>";
+            resBox.classList.remove('hidden');
+            updateSophia(`正在追溯“${val}”在不同时代的定义演变...`);
+
+            try {
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "evolve", query: val}) 
+                });
+                const data = await res.json();
+                
+                // 直接渲染，不再寻找 Mermaid 标签
+                resBox.innerHTML = marked.parse(data.evolution);
+
+                // 自动滚动到推演区域，提升用户体验
+                resBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (e) { 
+                console.error(e);
+                resBox.innerHTML = "历史链路异常。"; 
+            }
+        }
+
+        // --- 助手文字更新 ---
+        function updateSophia(msg) {
+            document.getElementById('sophia-talk').innerText = `"${msg}"`;
+        }
+
+        // --- 页面初始化 ---
         window.onload = () => {
-            fetchBackground(); // 页面一打开就随机一个背景
-            Object.values(cardUpdateMap).forEach(fn => fn());
+            refreshAssets();
+            loadRandomExp();
         };
+
+        function refreshBackground() { refreshAssets(); }
     </script>
 </body>
 </html>

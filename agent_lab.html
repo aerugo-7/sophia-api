@@ -9,7 +9,6 @@
     <!-- Mermaid 图表库 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
-        // 初始化 Mermaid，设定为暗色主题
         mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
     </script>
     
@@ -88,7 +87,29 @@
         .deco-frame { border: 1px solid #ffffff; box-shadow: 6px 6px 0px #0000ff; overflow: hidden; background: #000; margin-bottom: 30px; }
         .deco-frame img { width: 100%; height: 100%; object-fit: cover; }
         
-        .md-content strong { color: #facc15; font-weight: bold; }
+        /* 强制还原正文字体与高亮样式 */
+        .md-content {
+            font-size: 15px !important;
+            line-height: 1.8 !important;
+            color: #d1d5db !important;
+            font-family: 'Microsoft YaHei', sans-serif !important;
+        }
+
+        /* 还原 PROFILE 卡片的重点强调色 */
+        .md-content strong {
+            color: #facc15 !important;
+            font-weight: bold !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* 修复 Mermaid 容器，防止它撑破页面 */
+        .mermaid {
+            background: rgba(255, 255, 255, 0.03) !important;
+            padding: 20px !important;
+            margin-bottom: 30px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
@@ -361,26 +382,34 @@
                     body: JSON.stringify({action: "evolve", query: val}) 
                 });
                 const data = await res.json();
-                
-                let rawContent = data.evolution;
+                let content = data.evolution;
 
-                // --- 核心：Mermaid 识别与处理 ---
-                // 查找文本中的 graph TD 部分，并包裹进 <pre class="mermaid">
-                if (rawContent.includes("graph TD") || rawContent.includes("graph LR")) {
-                    // 正则提取图表代码
-                    rawContent = rawContent.replace(/(graph (TD|LR|BT|RL)[\s\S]*?)(?=\n\n|\n[A-Z]|第一阶段|$)/, '<pre class="mermaid">$1</pre>');
+                // 1. 强力清理：去掉 AI 可能带出的 Markdown 代码块标记 (```mermaid)
+                content = content.replace(/```mermaid/g, "").replace(/```/g, "");
+
+                // 2. 提取图表与文本
+                const graphMatch = content.match(/(graph LR[\s\S]*?)(?=\n[^\s])/);
+                let mermaidHtml = "";
+                let textHtml = content;
+
+                if (graphMatch) {
+                    mermaidHtml = `<pre class="mermaid">${graphMatch[1].trim()}</pre>`;
+                    textHtml = content.replace(graphMatch[1], "");
                 }
 
-                resBox.innerHTML = marked.parse(rawContent);
+                // 3. 渲染
+                resBox.innerHTML = mermaidHtml + `<div class="md-content">${marked.parse(textHtml)}</div>`;
 
-                // 异步渲染 Mermaid 图表
-                await mermaid.run({
-                    nodes: document.querySelectorAll('.mermaid'),
-                });
+                // 4. 触发 Mermaid 渲染
+                if (mermaidHtml) {
+                    await mermaid.run({
+                        nodes: document.querySelectorAll('.mermaid'),
+                    });
+                }
 
             } catch (e) { 
                 console.error(e);
-                resBox.innerHTML = "历史数据链条断裂。"; 
+                resBox.innerHTML = "历史数据链路异常。"; 
             }
         }
 
