@@ -155,10 +155,11 @@ async def sophia_api(req: QueryRequest):
                 if r: result = {"name": r[0], "description": r[1], "id": r[2]}
                 
             elif target == "experiment":
+                            # 必须查询 id，否则前端拼不出 static/experiments/exp_id.png
                 cur.execute("SELECT name, description, id FROM thought_experiments WHERE description IS NOT NULL ORDER BY RANDOM() LIMIT 1")
-                r = cur.fetchone()
-                if r: result = {"name": r[0], "description": r[1], "id": r[2]}
-                
+                row = cur.fetchone()
+                if row: result = {"name": row[0], "description": row[1], "id": row[2]}
+
             elif target == "gossip":
                 # 【核心修复】：通过 JOIN 关联 philosophers 表，获取 source 和 target 的 ID 供前端加载头像
                 cur.execute("""

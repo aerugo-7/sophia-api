@@ -34,11 +34,10 @@ class ExperimentAgent:
             
             执行要求：
             请从名单 {titan_names} 中选出一位支持者的哲学家 A 和一位持对立观点的哲学家 B。
-            输出的名字必须与名单中的文字【完全一致】，你必须【直接复制】名单中的名字，不要修改任何字符（特别是中间的点“·”）
-            必须严格按以下格式输出，不要有任何前言：
-            [哲学家A的名字]：[支持论点，并直接回应用户的输入]
+            必须严格按以下格式输出（禁止输出任何前言、后缀或括号说明）：
+            哲学家A的名字：[支持论点，并直接回应用户的输入]
             [VS]
-            [哲学家B的名字]：[反驳论点，并直接回应用户和哲学家A]
+            哲学家B的名字：[反驳论点，并直接回应用户和哲学家A]
             """
             resp = self.ds_client.chat.completions.create(
                 model="deepseek-chat", 
@@ -48,49 +47,36 @@ class ExperimentAgent:
             ai_text = resp.choices[0].message.content
 
 # 锁定冒号前的说话者 ---
+# --- 终极冒号匹配逻辑 ---
             parts = ai_text.split('[VS]')
             final_philosophers = []
             
             for part in parts:
                 text_segment = part.strip()
-                # 1. 找到第一个冒号（中英文冒号均可）的位置
-                # 我们只看前 40 个字符，防止在正文里找冒号
-                match = re.search(r'^(.{1,40}?)[:：]', text_segment)
-                
-                if match:
-                    # 2. 提取冒号前的原始文本作为“说话者名字”
-                    speaker_name = match.group(1).replace('*', '').strip()
+                # 查找第一个冒号
+                if "：" in text_segment or ":" in text_segment:
+                    # 提取冒号前的名字并清洗
+                    raw_name = re.split('：|:', text_segment)[0].replace('*','').strip()
                     
-                    # 3. 在 titans 名单中寻找这个说话者
-                    found_id = 0
-                    found_standard_name = speaker_name
-                    
-                    for name, p_id in titans:
-                        # 兼容逻辑：如果名字完全一致，或者 AI 漏掉了点（模糊包含）
-                        # 比如名单是 "约翰·洛克"，AI 吐出 "约翰·洛克" 或 "约翰洛克"
-                        clean_target = name.replace('·', '')
-                        clean_speaker = speaker_name.replace('·', '')
-                        
-                        if name == speaker_name or clean_target == clean_speaker:
-                            found_id = p_id
-                            found_standard_name = name
+                    # 匹配 ID（忽略中间点的影响）
+                    match_id = 0
+                    match_name = raw_name
+                    for t_name, t_id in titans:
+                        if t_name.replace('·','') in raw_name.replace('·','') or raw_name.replace('·','') in t_name.replace('·',''):
+                            match_id = t_id
+                            match_name = t_name
                             break
-                    
-                    final_philosophers.append({"name": found_standard_name, "id": found_id})
-                else:
-                    final_philosophers.append({"name": "未知先贤", "id": 0})
+                    final_philosophers.append({"name": match_name, "id": match_id})
 
-            # 补齐两个位置
             while len(final_philosophers) < 2:
-                final_philosophers.append({"name": "辩论者", "id": 0})
+                final_philosophers.append({"name": "先贤", "id": 0})
 
-            cur.close(); conn.close()
             return {
-                "text": ai_text,
+                "text": ai_text.replace('[VS]', '\n\n---\n\n'), # 格式化文本
                 "philosophers": final_philosophers,
-                "exp_id": exp[2]
+                "id": exp[2]
             }
-
+            
         except Exception as e:
             print(f"Error in Simulation: {e}")
             print(traceback.format_exc())
