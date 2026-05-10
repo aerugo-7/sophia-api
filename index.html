@@ -6,8 +6,6 @@
     <title>SOPHIA-GRAPH | THE PHILOSOPHY SYSTEM</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Markdown 解析库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- 像素字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     
@@ -30,17 +28,17 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-repeat: no-repeat; background-position: center center; background-size: cover; 
             filter: blur(4px) brightness(0.4); z-index: 0; 
-            transition: opacity 0.2s ease-in-out; 
+            transition: opacity 0.5s ease-in-out; 
         }
 
         /* --- 刷新按钮：一比一同步知识库样式 --- */
         .refresh-btn-sync {
             position: fixed; top: 1rem; left: 1rem; z-index: 1001;
-            background-color: #111827; /* bg-gray-900 */
-            color: #eab308; /* text-yellow-500 */
-            border: 2px solid #eab308; /* border-yellow-500 */
-            padding: 0.5rem 0.75rem; /* px-3 py-2 */
-            font-size: 0.75rem; /* text-xs */
+            background-color: #111827; 
+            color: #eab308; 
+            border: 2px solid #eab308; 
+            padding: 0.5rem 0.75rem; 
+            font-size: 0.75rem; 
             cursor: pointer;
             box-shadow: 4px 4px 0px 0px #000;
             transition: all 0.2s;
@@ -55,11 +53,17 @@
         /* --- 核心内容布局 --- */
         .content-wrapper { 
             position: relative; z-index: 3; height: calc(100% - 60px); 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            display: flex; flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; /* 移除居中，手动控制偏移 */
         }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .floating-box { animation: float 4s ease-in-out infinite; text-align: center; }
+        .floating-box { 
+            animation: float 4s ease-in-out infinite; 
+            text-align: center;
+            margin-top: 15vh; /* 将标题块下移至顶栏下方合适位置 */
+        }
 
         /* 标题方框 */
         .title-container { position: relative; padding: 60px 80px; }
@@ -72,28 +76,13 @@
         .main-title { font-size:28px; color: #ffffff; line-height: 1.8; text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5); }
         .sub-title { font-size: 14px; color: #00ffff; margin-top: 25px; opacity: 0.8; letter-spacing: 2px; }
 
-        /* 故事展示盒 */
-/* 故事展示盒：恢复原始的半透明+红色侧边线风格 */
-        .story-box { 
-            margin-top: 40px; 
-            max-width: 700px; 
-            font-family: 'STFangsong', 'SimSun', serif !important; 
-            color: #d1d5db; 
-            font-size: 12px; 
-            line-height: 1.8; 
-            background: rgba(0,0,0,0.4); /* 半透明背景 */
-            padding: 20px 30px; 
-            border-left: 4px solid #ff0055; /* 经典的红色左侧边框 */
-            text-shadow: 1px 1px 2px #000; 
-            text-align: justify;
-            /* 删除了之前的白色全边框和蓝色硬阴影 */
-        }
-                /* Markdown 内部样式 */
-        .md-content strong { color: #facc15; font-weight: bold; }
-        .md-content p { margin: 0; }
-
         /* 底部引导 */
-        .hint-container { margin-top: 60px; cursor: pointer; text-align: center; }
+        .hint-container { 
+            margin-top: auto; /* 推到底部 */
+            margin-bottom: 80px; 
+            cursor: pointer; 
+            text-align: center; 
+        }
         .hint-text { color: #fff; font-size: 16px; animation: blink 0.8s steps(2) infinite; margin-bottom: 10px; }
         .click-info { color: #ff0055; font-size: 5px; letter-spacing: 4px; }
         
@@ -107,7 +96,7 @@
     <div class="noise-overlay"></div>
     <div class="crt-overlay"></div>
 
-    <!-- 刷新按钮：同步知识库的样式与位置 -->
+    <!-- 刷新按钮 -->
     <button class="refresh-btn-sync" onclick="refreshBackground()">REFRESH BACKGROUND</button>
 
     <!-- 导航栏 -->
@@ -120,7 +109,7 @@
     </nav>    
 
     <!-- 主体 -->
-    <div class="content-wrapper">
+    <div class="content-wrapper" onclick="enterSystem()">
         <div class="floating-box">
             <div class="title-container">
                 <div class="pixel-box-frame"></div>
@@ -130,21 +119,15 @@
                 <div class="sub-title text-cyan-400">Maybe You Like Philosophy</div>
             </div>
         </div>
-
-        <!-- 随机小故事区（已应用 Markdown 与 阴影边框） -->
-        <div class="story-box">
-            <div id="daily-story" class="md-content">"正在同步..."</div>
-            <div id="story-author" class="text-right text-xs text-yellow-500 mt-4 font-bold tracking-widest" style="font-family: sans-serif !important;"></div>
-        </div>
         
-        <!-- 入场提示 -->
-        <div class="hint-container" onclick="enterSystem()">
+        <!-- 入场提示 (固定在标题与页底版权之间) -->
+        <div class="hint-container">
             <div class="hint-text">-- PRESS START --</div>
             <div class="click-info text-xs">ANYWHERE TO CONTINUE</div>
         </div>
     </div>
 
-    <!-- 底部版权文字：像素字体，白色带阴影，与大标题样式一致但字号更小 -->
+    <!-- 底部版权文字 -->
     <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; 
                 font-family: 'Press Start 2P', cursive; font-size: 10px; color: #ffffff; 
                 text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5); text-align: center; 
@@ -173,28 +156,11 @@
             } catch (e) { console.error("背景加载失败", e); }
         }
 
-        async function fetchRandomStory() {
-            try {
-                const response = await fetch(API_BASE, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ action: "random_story", query: "" }) 
-                });
-                const data = await response.json();
-                // 使用 marked 渲染 Markdown，确保 *加粗* 有效
-                document.getElementById('daily-story').innerHTML = marked.parse(data.story);
-                document.getElementById('story-author').innerText = "- " + data.author + " -";
-            } catch (err) {
-                document.getElementById('daily-story').innerText = "无论世界如何荒诞，我们仍需推石上山。";
-                document.getElementById('story-author').innerText = "- 加缪 -";
-            }
-        }
-
         function refreshBackground() { fetchBackground(); }
         function enterSystem() { window.location.href = 'knowledge_base.html'; }
 
         window.onload = () => {
             fetchBackground();
-            fetchRandomStory();
         };
     </script>
 </body>
