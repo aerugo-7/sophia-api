@@ -81,7 +81,7 @@ class ExperimentAgent:
                     content = text_segment[match.end():].strip()
                     final_texts.append(content)
 
-            # 补齐逻辑
+            # 补齐逻辑（确保至少有两个）
             while len(final_philosophers) < 2:
                 final_philosophers.append({"name": "先贤", "id": 0})
             if len(final_texts) < 2:
@@ -92,9 +92,16 @@ class ExperimentAgent:
             # 将 text 重新组合为带分隔符的格式，供前端再次拆分
             reformatted_text = f"{final_texts[0]} [VS] {final_texts[1]}"
 
+            # 确保拿到两个哲学家，不足则补默认值
+            philo_a = final_philosophers[0] if len(final_philosophers) > 0 else {"name": "先贤", "id": 0}
+            philo_b = final_philosophers[1] if len(final_philosophers) > 1 else {"name": "先贤", "id": 0}
+
             return {
                 "text": reformatted_text,
-                "philosophers": final_philosophers,
+                "philosophers": [
+                    {"name": philo_a["name"], "id": philo_a["id"]},
+                    {"name": philo_b["name"], "id": philo_b["id"]}
+                ],
                 "exp_id": exp[2]
             }            
         except Exception as e:

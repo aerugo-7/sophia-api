@@ -4,7 +4,7 @@ import base64
 import os
 
 # --- 配置 ---
-BASE_PATH = r"F:\哲学System"
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 DB_CONFIG = {"database": "philosophy_db", "user": "postgres", "password": "536827", "host": "127.0.0.1", "port": "5432"}
 
 def generate_unified_universe():
@@ -172,7 +172,7 @@ def generate_unified_universe():
         </div>
 
         <script>
-            const API_BASE = "http://127.0.0.1:8001/sophia/api";
+            const API_BASE = "http://127.0.0.1:8000/sophia/api";
             const globeRaw = {json.dumps(globe_points)};
             const nebulaNodesRaw = {json.dumps(nebula_nodes)};
             const nebulaEdgesRaw = {json.dumps(nebula_edges)};
@@ -208,7 +208,11 @@ def generate_unified_universe():
             function openSidebar(data) {{
                 document.getElementById('side-name').innerText = data.name;
                 document.getElementById('side-tier-display').innerText = data.tier || "思想节点";
-                document.getElementById('side-img').src = data.db_id ? `static/avatars/avatar_${{data.db_id}}.png` : 'static/pic/bg.png';
+                
+                // 关键：利用传入的 db_id 拼接路径
+                const philoId = data.db_id; 
+                document.getElementById('side-img').src = philoId ? `static/avatars/avatar_${{philoId}}.png` : 'static/pic/bg.png';
+                
                 document.getElementById('side-desc').innerHTML = marked.parse(data.description || data.brief || "");
                 document.getElementById('unified-sidebar').classList.add('open');
             }}

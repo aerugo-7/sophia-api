@@ -212,7 +212,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://127.0.0.1:8001/sophia/api";
+        const API_BASE = "http://127.0.0.1:8000/sophia/api";
 
         // 工具函数：为 DOM 元素触发翻转动画
         function triggerFlipAnimation(elementId, updateCallback) {
@@ -278,7 +278,7 @@
                 document.getElementById('content-philo-name').innerText = data.name;
                 document.getElementById('content-philo-era').innerText = data.era;
                 document.getElementById('content-philo-desc').innerHTML = marked.parse(data.description || "无记录");
-                document.getElementById('content-philo-img').src = "static/avatars/" + data.name + ".png";
+                document.getElementById('content-philo-img').src = `static/avatars/avatar_${data.id}.png`;
             } catch (e) { console.error(e); }
         }
 
@@ -297,9 +297,7 @@
                 const data = await res.json();
                 document.getElementById('content-era-name').innerText = data.name;
                 document.getElementById('content-era-desc').innerHTML = marked.parse(data.era_summary || "");
-                // 去除可能含有的非法字符，保证图片加载
-                let safeName = data.name.replace(/[^\w\s\u4e00-\u9fa5-]/g, '').trim();
-                document.getElementById('content-era-bg').src = "static/eras/" + safeName + ".png";
+                document.getElementById('content-era-bg').src = `static/eras/era_${data.id}.png`;
             } catch (e) { console.error(e); }
         }
 
@@ -309,22 +307,31 @@
                 const data = await res.json();
                 document.getElementById('content-school-name').innerText = data.name;
                 document.getElementById('content-school-desc').innerHTML = marked.parse(data.description || "");
-                let safeName = data.name.replace(/[^\w\s\u4e00-\u9fa5-]/g, '').trim();
-                document.getElementById('content-school-icon').src = "static/schools/" + safeName + ".png";
+                document.getElementById('content-school-icon').src = `static/schools/school_${data.id}.png`;
             } catch (e) { console.error(e); }
         }
 
         async function fetchGossip() {
             try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "gossip" }}) });
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ action: "get_random", params: { target: "gossip" }}) 
+                });
                 const data = await res.json();
+                
+                // 1. 设置名字
                 document.getElementById('gossip-name-1').innerText = data.source;
-                document.getElementById('gossip-img-1').src = "static/avatars/" + data.source + ".png";
-                document.getElementById('gossip-relation').innerText = data.relation;
                 document.getElementById('gossip-name-2').innerText = data.target;
-                document.getElementById('gossip-img-2').src = "static/avatars/" + data.target + ".png";
-                document.getElementById('gossip-desc').innerHTML = marked.parse(data.description || "在哲学的长河中，两人的思想发生了碰撞。");
-            } catch (e) { console.error(e); }
+                document.getElementById('gossip-relation').innerText = data.relation;
+                
+                // 2. 【关键修改】：使用 ID 拼接头像路径
+                document.getElementById('gossip-img-1').src = `static/avatars/avatar_${data.source_id}.png`;
+                document.getElementById('gossip-img-2').src = `static/avatars/avatar_${data.target_id}.png`;
+                
+                // 3. 渲染描述
+                document.getElementById('gossip-desc').innerHTML = marked.parse(data.description || "逻辑连通中...");
+            } catch (e) { console.error("Gossip 加载失败", e); }
         }
 
         async function fetchExperiment() {
@@ -333,8 +340,7 @@
                 const data = await res.json();
                 document.getElementById('content-exp-name').innerText = data.name;
                 document.getElementById('content-exp-desc').innerHTML = marked.parse(data.description || "");
-                let safeName = data.name.replace(/[^\w\s\u4e00-\u9fa5-]/g, '').trim();
-                document.getElementById('content-exp-img').src = "static/experiments/" + safeName + ".png";
+                document.getElementById('content-exp-img').src = `static/experiments/exp_${data.id}.png`;
             } catch (e) { console.error(e); }
         }
 
