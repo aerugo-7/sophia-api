@@ -4,28 +4,39 @@ from openai import OpenAI
 import json
 import re
 
-# --- 数据库连接：优先使用环境变量，兼容本地开发（使用 Neon 云端连接）---
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://neondb_owner:npg_jKDUwR6ldfY1@ep-wild-mode-aouqz0r7-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-)
-
+# 不再独立定义 DATABASE_URL，由主调用方注入连接函数
 class ExperimentAgent:
-    def __init__(self):
-        self.ds_client = OpenAI(api_key="sk-125beb76c63b469485884a6a63deb157", base_url="https://api.deepseek.com")
-        # 不再使用本地 db_config，统一使用云端连接字符串
-        self.db_url = DATABASE_URL
-
-    def get_db_conn(self):
-        return psycopg2.connect(self.db_url)
+    def __init__(self, db_connection_func=None):
+        """
+        db_connection_func: 可选的数据库连接工厂函数，无参，返回 psycopg2 连接对象。
+        若未提供，则回退到读取环境变量 DATABASE_URL（本地兼容）。
+        """
+        if db_connection_func:
+            self.get_conn = db_connection_func
+        else:
+            # 回退方案：自己构造连接（在直接运行本文件测试时可用）
+            DATABASE_URL = os.environ.get(
+                "DATABASE_URL",
+                "postgresql://neondb_owner:npg_jKDUwR6ldfY1@ep-wild-mode-aouqz0r7-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+            )
+            self.get_conn = lambda: psycopg2.connect(DATABASE_URL)
+        
+        self.ds_client = OpenAI(
+            api_key="sk-125beb76c63b469485884a6a63deb157",
+            base_url="https://api.deepseek.com"
+        )
 
     def run_experiment_simulation(self, experiment_name, user_decision):
-        conn = self.get_db_conn(); cur = conn.cursor()
+        conn = self.get_conn()
+        cur = conn.cursor()
         
         # 1. 获取思想实验数据
         cur.execute("SELECT name, description, id FROM thought_experiments WHERE name = %s", (experiment_name,))
         exp = cur.fetchone()
-        if not exp: return {"text": "未找到实验", "philosophers": []}
+        if not exp:
+            cur.close()
+            conn.close()
+            return {"text": "未找到实验", "philosophers": []}
         
         # 2. 获取图谱中的“巨头”名单
         cur.execute("SELECT name, id FROM philosophers WHERE avatar_image IS NOT NULL ORDER BY influence_score DESC LIMIT 10")
@@ -95,7 +106,8 @@ class ExperimentAgent:
             if len(final_texts) < 2:
                 final_texts = [ai_text, ""]
 
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
 
             # 将 text 重新组合为带分隔符的格式，供前端再次拆分
             reformatted_text = f"{final_texts[0]} [VS] {final_texts[1]}"
@@ -113,4 +125,8 @@ class ExperimentAgent:
                 "exp_id": exp[2]
             }            
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+            cur.close()
+            conn.close()
             return {"text": f"AI 处理出错：{str(e)}", "philosophers": [], "exp_id": 0}

@@ -58,14 +58,14 @@ async def sophia_api(req: QueryRequest):
 
         # 3. 实验对垒模拟器
         elif req.action == "experiment":
-            ea = ExperimentAgent()
+            ea = ExperimentAgent(get_db_conn)  # 注入连接函数
             exp_name = req.params.get("name")
             # 返回包含 text, philosophers(含ID), exp_id 的字典
             return ea.run_experiment_simulation(exp_name, req.query)
 
         # 4. 逻辑演变推演
         elif req.action == "evolve":
-            le = LogicEngine()
+            le = LogicEngine(get_db_conn)      # 注入连接函数
             return {"evolution": le.run_evolution_analysis(req.query)}
 
         # 5. 首页：随机小故事
