@@ -6,6 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Mermaid 图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        // 初始化 Mermaid，设定为暗色主题
+        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+    </script>
     
     <style>
         /* --- 1. 核心美学：100% 同步知识库 --- */
@@ -18,14 +24,12 @@
         .page-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-position: center center; background-size: cover; filter: blur(4px) brightness(0.3); z-index: 0; transition: opacity 0.5s; }
 
         /* 统一刷新按钮与导航栏 */
-/* 统一刷新按钮与导航栏 */
         .refresh-btn-sync {
             position: fixed; top: 1rem; left: 1rem; z-index: 1001;
             background-color: #111827; color: #eab308; border: 2px solid #eab308;
             padding: 0.5rem 0.75rem; font-size: 0.75rem; cursor: pointer;
             box-shadow: 4px 4px 0px 0px #000; transition: 0.2s;
         }
-        /* 👇 新增 hover 效果，与知识库按钮一致 */
         .refresh-btn-sync:hover {
             background-color: #eab308;
             color: #000;
@@ -37,7 +41,7 @@
         /* --- 2. 实验室格栅布局：确保左 2/3 右 1/3 --- */
         .lab-container {
             display: grid; 
-            grid-template-columns: 1fr 380px; /* 固定右侧宽度，左侧自适应 */
+            grid-template-columns: 1fr 380px;
             gap: 40px; 
             max-width: 1400px; 
             margin: 40px auto; 
@@ -50,8 +54,10 @@
             background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(12px);
             border: 2px solid #ffffff; box-shadow: 12px 12px 0px #0000ff;
             padding: 35px; margin-bottom: 50px;
+            position: relative;
+            counter-increment: section;
         }
-                .station-card::before {
+        .station-card::before {
             content: "LAB_SEC_0" counter(section);
             position: absolute; top: -10px; left: 20px;
             background: #0000ff; color: #fff; padding: 2px 8px;
@@ -67,7 +73,7 @@
 
         /* 对垒区样式 */
         .debate-row { display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start; }
-.philo-avatar { 
+        .philo-avatar { 
             width: 80px; height: 80px; 
             border: 2px solid #fff; 
             box-shadow: 6px 6px 0px #0000ff; 
@@ -75,7 +81,8 @@
             object-fit: cover;
         }
         .philo-avatar.border-blue-500 { border-color: #3b82f6; box-shadow: 4px 4px 0px #1e3a8a; }
-        .philo-avatar.border-red-500 { border-color: #ef4444; box-shadow: 4px 4px 0px #7f1d1d; }        .bubble { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 4px; font-size: 15px; line-height: 1.8; flex: 1; border-left: 4px solid #facc15; }
+        .philo-avatar.border-red-500 { border-color: #ef4444; box-shadow: 4px 4px 0px #7f1d1d; }
+        .bubble { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 4px; font-size: 15px; line-height: 1.8; flex: 1; border-left: 4px solid #facc15; }
         .bubble-right { border-left: none; border-right: 4px solid #ef4444; text-align: right; }
 
         .deco-frame { border: 1px solid #ffffff; box-shadow: 6px 6px 0px #0000ff; overflow: hidden; background: #000; margin-bottom: 30px; }
@@ -196,29 +203,28 @@
         </aside>
 
     </div> <!-- 结束 lab-container -->
-<script>
+
+    <script>
         const API_BASE = "https://sophia-api-production-e49c.up.railway.app/sophia/api";
         let currentExpName = "";
 
         // --- 1. 素材初始化 (背景与随机装饰图) ---
         async function refreshAssets() {
             try {
-            // 刷新背景（带渐隐渐显）
-            const resBg = await fetch(API_BASE, { 
-                method: 'POST', headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({action: "get_decoration", query:""}) 
-            });
-            const dBg = await resBg.json();
-            if(dBg.image_path) {
-                const bgEl = document.getElementById('dynamic-bg');
-                // 1. 先淡出
-                bgEl.style.opacity = 0;
-                // 2. 500ms 后换图并淡入
-                setTimeout(() => {
-                    bgEl.style.backgroundImage = `url('${dBg.image_path}')`;
-                    bgEl.style.opacity = 1;
-                }, 500);
-            }
+                // 刷新背景（带渐隐渐显）
+                const resBg = await fetch(API_BASE, { 
+                    method: 'POST', headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "get_decoration", query:""}) 
+                });
+                const dBg = await resBg.json();
+                if(dBg.image_path) {
+                    const bgEl = document.getElementById('dynamic-bg');
+                    bgEl.style.opacity = 0;
+                    setTimeout(() => {
+                        bgEl.style.backgroundImage = `url('${dBg.image_path}')`;
+                        bgEl.style.opacity = 1;
+                    }, 500);
+                }
                 // 刷新三个随机装饰位
                 const ids = ['deco-1', 'deco-2', 'side-asset'];
                 for(let id of ids) {
@@ -245,7 +251,6 @@
                 const data = response.data || [];
 
                 let html = "";
-                // 严格限制 3 条输出
                 data.slice(0, 3).forEach(item => {
                     html += `
                         <div class="mb-8 border-b border-white/5 pb-6 last:border-0">
@@ -257,8 +262,8 @@
             } catch (e) { resBox.innerHTML = "检索链路异常。"; }
         }
 
-        // --- 3. 实验台 B: 思想实验对垒 (核心修复版) ---
-async function loadRandomExp() {
+        // --- 3. 实验台 B: 思想实验对垒 ---
+        async function loadRandomExp() {
             try {
                 const res = await fetch(API_BASE, { 
                     method: 'POST', 
@@ -271,7 +276,6 @@ async function loadRandomExp() {
                 document.getElementById('exp-name').innerText = data.name;
                 document.getElementById('exp-desc').innerText = data.description;
                 
-                // 【核心修复】：后端必须返回 id，路径必须匹配
                 if(data.id) {
                     document.getElementById('exp-img').src = `static/experiments/exp_${data.id}.png`;
                 }
@@ -279,12 +283,12 @@ async function loadRandomExp() {
                 document.getElementById('res-exp').classList.add('hidden');
             } catch (e) { console.error("载入实验失败", e); }
         }
-async function handleSimulation() {
+
+        async function handleSimulation() {
             const val = document.getElementById('input-exp').value;
             const resBox = document.getElementById('res-exp');
             if(!val) return;
 
-            // 1. 视觉准备
             resBox.innerHTML = "<div class='text-center py-10 text-red-400 animate-pulse pixel-font text-xs'>召集先贤中... [CALLING PHILOSOPHERS]</div>";
             resBox.classList.remove('hidden');
             updateSophia("正在模拟跨时空的逻辑冲突，请稍候...");
@@ -297,15 +301,12 @@ async function handleSimulation() {
                 });
                 const data = await res.json(); 
 
-                // 2. 逻辑切分：利用后端传来的 [VS] 分割符
                 const parts = data.text.split('[VS]');
                 const philoA = data.philosophers[0] || {name: "支持方", id: 0};
                 const philoB = data.philosophers[1] || {name: "反对方", id: 0};
 
-                // 3. 构建双气泡排版
                 let html = `
                     <div class="flex gap-8 items-start animate-fadeIn">
-                        <!-- 左侧：固定头像塔 (垂直排列) -->
                         <div class="flex flex-col gap-6 flex-shrink-0 sticky top-0">
                             <div class="group">
                                 <img src="static/avatars/avatar_${philoA.id}.png" class="philo-avatar border-blue-500" onerror="this.src='static/pic/bg.png'">
@@ -317,9 +318,7 @@ async function handleSimulation() {
                             </div>
                         </div>
 
-                        <!-- 右侧：双重对话气泡区 -->
                         <div class="flex-1 space-y-8">
-                            <!-- 对话框 1: 支持方 -->
                             <div class="bg-blue-900/10 border-l-4 border-blue-500 p-6 shadow-lg">
                                 <div class="pixel-font text-[10px] text-blue-500 mb-3">[ POSITION: SUPPORT ]</div>
                                 <div class="md-content text-gray-200 text-[15px] leading-relaxed">
@@ -327,7 +326,6 @@ async function handleSimulation() {
                                 </div>
                             </div>
 
-                            <!-- 对话框 2: 反对方 -->
                             <div class="bg-red-900/10 border-l-4 border-red-500 p-6 shadow-lg">
                                 <div class="pixel-font text-[10px] text-red-500 mb-3">[ POSITION: OPPOSITION ]</div>
                                 <div class="md-content text-gray-200 text-[15px] leading-relaxed">
@@ -345,7 +343,8 @@ async function handleSimulation() {
                 resBox.innerHTML = "<div class='p-4 text-red-500'>[ERROR] 逻辑链路断开，请检查后端 API。</div>"; 
             }
         }
-        // --- 4. 实验台 C: 概念流变 ---
+
+        // --- 4. 实验台 C: 概念流变 (集成 Mermaid 图表) ---
         async function handleEvolution() {
             const val = document.getElementById('input-evolve').value;
             const resBox = document.getElementById('res-evolve');
@@ -356,10 +355,33 @@ async function handleSimulation() {
             updateSophia(`正在追溯“${val}”在不同时代的定义演变...`);
 
             try {
-                const res = await fetch(API_BASE, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action: "evolve", query: val}) });
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({action: "evolve", query: val}) 
+                });
                 const data = await res.json();
-                resBox.innerHTML = marked.parse(data.evolution);
-            } catch (e) { resBox.innerHTML = "历史数据链条断裂。"; }
+                
+                let rawContent = data.evolution;
+
+                // --- 核心：Mermaid 识别与处理 ---
+                // 查找文本中的 graph TD 部分，并包裹进 <pre class="mermaid">
+                if (rawContent.includes("graph TD") || rawContent.includes("graph LR")) {
+                    // 正则提取图表代码
+                    rawContent = rawContent.replace(/(graph (TD|LR|BT|RL)[\s\S]*?)(?=\n\n|\n[A-Z]|第一阶段|$)/, '<pre class="mermaid">$1</pre>');
+                }
+
+                resBox.innerHTML = marked.parse(rawContent);
+
+                // 异步渲染 Mermaid 图表
+                await mermaid.run({
+                    nodes: document.querySelectorAll('.mermaid'),
+                });
+
+            } catch (e) { 
+                console.error(e);
+                resBox.innerHTML = "历史数据链条断裂。"; 
+            }
         }
 
         // --- 助手文字更新 ---
