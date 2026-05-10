@@ -31,10 +31,32 @@
 
         /* --- 卡片通用样式 (Bento Grid) --- */
         .pixel-card {
-            position: relative; background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(8px);
-            border: 2px solid #3b82f6; box-shadow: 6px 6px 0px rgba(0, 0, 255, 0.3);
-            padding: 24px; transition: box-shadow 0.3s ease; overflow: hidden;
+            position: relative; 
+            background: rgba(15, 15, 20, 0.7); 
+            backdrop-filter: blur(8px);
+            border: 2px solid #3b82f6; 
+            box-shadow: 6px 6px 0px rgba(0, 0, 255, 0.3);
+            padding: 24px; 
+            display: flex; 
+            flex-direction: column;
+            overflow-y: auto; /* 【关键】：内容多时自动出现滚动条 */
+            scrollbar-width: thin; /* 针对火狐的小滚动条 */
+            scrollbar-color: #3b82f6 #000;
+        }        
+
+        /* 针对 Chrome 的滚动条美化（让它看起来不丑） */
+        .pixel-card::-webkit-scrollbar { width: 4px; }
+        .pixel-card::-webkit-scrollbar-track { background: #000; }
+        .pixel-card::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+
+        /* 修复内部图片的尺寸，防止它挤占文字空间 */
+        .pixel-card img {
+            max-height: 150px; 
+            object-fit: contain; 
+            margin-bottom: 15px;
+            flex-shrink: 0; /* 禁止图片被压缩 */
         }
+
         .pixel-card:hover { box-shadow: 6px 6px 0px rgba(250, 204, 21, 0.6); border-color: #facc15; }
         
         /* 特定板块颜色区分 */
