@@ -55,14 +55,14 @@
             position: relative; z-index: 3; height: calc(100% - 60px); 
             display: flex; flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; /* 移除居中，手动控制偏移 */
+            justify-content: flex-start; 
         }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .floating-box { 
             animation: float 4s ease-in-out infinite; 
             text-align: center;
-            margin-top: 15vh; /* 将标题块下移至顶栏下方合适位置 */
+            margin-top: 15vh; 
         }
 
         /* 标题方框 */
@@ -76,10 +76,10 @@
         .main-title { font-size:28px; color: #ffffff; line-height: 1.8; text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5); }
         .sub-title { font-size: 14px; color: #00ffff; margin-top: 25px; opacity: 0.8; letter-spacing: 2px; }
 
-        /* 底部引导 */
+        /* 底部引导（已调高位置） */
         .hint-container { 
-            margin-top: auto; /* 推到底部 */
-            margin-bottom: 80px; 
+            margin-top: auto; 
+            margin-bottom: 180px; /* 增加边距使位置上移 */
             cursor: pointer; 
             text-align: center; 
         }
@@ -120,7 +120,7 @@
             </div>
         </div>
         
-        <!-- 入场提示 (固定在标题与页底版权之间) -->
+        <!-- 入场提示 (位置已上移) -->
         <div class="hint-container">
             <div class="hint-text">-- PRESS START --</div>
             <div class="click-info text-xs">ANYWHERE TO CONTINUE</div>
