@@ -164,6 +164,14 @@
 
         /* 段落间增加呼吸感 */
         #res-evolve br { margin-bottom: 10px; }
+
+        /* 确保所有 Markdown 加粗都自动变黄 */
+        .md-content strong, #res-evolve strong {
+            color: #facc15 !important;
+            font-weight: bold !important;
+            background: rgba(250, 204, 21, 0.1);
+            padding: 0 2px;
+        }
     </style>
 </head>
 <body>
