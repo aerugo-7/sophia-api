@@ -5,3 +5,4 @@ numpy
 scipy
 openai
 requests
+networkx
