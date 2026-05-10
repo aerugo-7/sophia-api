@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOPHIA - GALLERY ARCHIVE</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Markdown 解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 像素字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 全局与复古设定 (与前页保持一致) --- */
+        * { box-sizing: border-box; }
+        body, html { width: 100%; min-height: 100%; background-color: #050510; color: #d1d5db; margin: 0; font-family: 'Microsoft YaHei', serif; }
+        .pixel-font { font-family: 'Press Start 2P', cursive !important; image-rendering: pixelated; text-transform: uppercase; }
+        
+        /* 覆盖层 */
+        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url("https://media.giphy.com/media/oEI9uWUicfG5m/giphy.gif"); opacity: 0.03; pointer-events: none; z-index: 999; }
+        .crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 4px, 4px 100%; pointer-events: none; z-index: 1000; }
+        .page-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-position: center center; background-size: cover; filter: blur(4px) brightness(0.2); z-index: 0; transition: opacity 0.5s ease-in-out; }
+
+        /* 顶部导航栏 */
+        nav { background: rgba(0,0,0,0.8); border-bottom: 2px solid #3b82f6; }
+        nav a { color: #aaa; text-decoration: none; padding: 10px 15px; font-size: 10px; transition: 0.3s; }
+        nav a:hover, nav a.active { color: #facc15; text-shadow: 2px 2px 0px #000; }
+
+        /* --- 画廊专属样式 --- */
+        /* 分类选项卡 */
+        .tab-btn {
+            background: transparent; border: 2px solid #4b5563; color: #9ca3af; 
+            padding: 10px 20px; cursor: pointer; transition: all 0.3s; font-size: 10px;
+        }
+        .tab-btn.active {
+            border-color: #facc15; color: #facc15; background: rgba(250, 204, 21, 0.1);
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        }
+        .tab-btn:hover:not(.active) { border-color: #60a5fa; color: #60a5fa; }
+
+        /* 档案网格 */
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        /* 单个图片卡片 (全息相框) */
+        .gallery-item {
+            position: relative; aspect-ratio: 1 / 1; overflow: hidden;
+            border: 2px solid #1e3a8a; background: #000; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .gallery-item:hover {
+            border-color: #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transform: translateY(-5px); z-index: 10;
+        }
+        .gallery-item img {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: grayscale(80%) contrast(1.2); transition: filter 0.3s;
+        }
+        .gallery-item:hover img { filter: grayscale(0%) contrast(1.1); }
+        
+        .item-label {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 0, 0, 0.8); border-top: 1px solid #1e3a8a;
+            padding: 8px; font-size: 12px; color: #fff; text-align: center;
+            transform: translateY(100%); transition: transform 0.3s;
+        }
+        .gallery-item:hover .item-label { transform: translateY(0); border-color: #00ffff;}
+
+        /* --- 弹窗 Modal 样式 --- */
+        #modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background: #0f111a; border: 3px solid #3b82f6;
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.8);
+            width: 90%; max-width: 900px; max-height: 80vh;
+            display: flex; flex-direction: column; md:flex-row;
+            transform: scale(0.95); transition: transform 0.3s;
+            overflow: hidden;
+        }
+        #modal-overlay.active .modal-content { transform: scale(1); }
+
+        .modal-close {
+            position: absolute; top: 15px; right: 20px;
+            color: #ef4444; cursor: pointer; font-size: 20px; z-index: 10;
+        }
+        .modal-close:hover { color: #f87171; text-shadow: 0 0 5px red; }
+
+        /* Modal 内部 Markdown 样式 */
+        .md-content h1, .md-content h2, .md-content h3 { color: #facc15; margin-bottom: 10px; font-weight: bold; }
+        .md-content p { margin-bottom: 15px; color: #d1d5db; line-height: 1.6; }
+        .md-content strong { color: #60a5fa; }
+    </style>
+</head>
+<body class="relative min-h-screen">
+    <div class="noise-overlay"></div>
+    <div class="crt-overlay"></div>
+    <div id="dynamic-bg" class="page-bg" style="background-image: url('static/pic/bg.png');"></div>
+
+    <!-- 左上角背景刷新按钮 -->
+    <button onclick="refreshBackground()" class="fixed top-4 left-4 z-[1001] pixel-font bg-gray-900 text-yellow-500 border-2 border-yellow-500 px-3 py-2 text-xs hover:bg-yellow-500 hover:text-black transition-colors cursor-pointer shadow-[4px_4px_0_0_#000]">
+        REFRESH BACKGROUND
+    </button>
+
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 w-full z-50 flex justify-center py-4 pixel-font shadow-lg backdrop-blur-md">
+        <a href="index.html" class="hover:text-yellow-400">HOME</a>
+        <a href="knowledge_base.html" class="hover:text-yellow-400">KNOWLEDGE</a>
+        <a href="gallery.html" class="active">GALLERY</a>
+        <a href="universe.html">UNIVERSE</a>
+        <a href="agent_lab.html">LAB</a>
+    </nav>
+
+    <!-- 主体区域 -->
+    <div class="max-w-7xl mx-auto mt-10 px-6 relative z-10">
+        
+        <header class="mb-10 text-center">
+            <h1 class="pixel-font text-3xl text-white text-shadow-md mb-2">VISUAL ARCHIVES</h1>
+            <p class="text-sm text-blue-400 pixel-font tracking-widest">ACCESSING ENCRYPTED ASSETS...</p>
+        </header>
+
+        <!-- 筛选项 Tabs -->
+        <div class="flex justify-center flex-wrap gap-4 mb-10">
+            <button class="pixel-font tab-btn active" onclick="switchTab('philosopher')">PHILOSOPHERS</button>
+            <button class="pixel-font tab-btn" onclick="switchTab('experiment')">EXPERIMENTS</button>
+            <button class="pixel-font tab-btn" onclick="switchTab('era')">ERAS</button>
+            <button class="pixel-font tab-btn" onclick="switchTab('school')">SCHOOLS</button>
+        </div>
+
+        <!-- 画廊网格容器 -->
+        <div id="gallery-container" class="archive-grid">
+            <!-- 图片卡片由 JS 注入 -->
+            <div class="col-span-full text-center py-20 text-yellow-500 pixel-font animate-pulse">LOADING ASSETS...</div>
+        </div>
+
+    </div>
+
+    <!-- 详情弹窗 Modal -->
+    <div id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content relative flex flex-col md:flex-row bg-gray-900" onclick="event.stopPropagation()">
+            <div class="modal-close pixel-font" onclick="closeModal(event, true)">X</div>
+            
+            <!-- 左侧大图 -->
+            <div class="md:w-1/2 bg-black flex items-center justify-center border-b md:border-b-0 md:border-r border-blue-800 p-4">
+                <img id="modal-img" src="" alt="Detail Image" class="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain border border-gray-700 shadow-lg">
+            </div>
+            
+            <!-- 右侧详情 -->
+            <div class="md:w-1/2 p-8 overflow-y-auto max-h-[50vh] md:max-h-[80vh]">
+                <div id="modal-tag" class="pixel-font text-[10px] text-blue-400 border border-blue-400 inline-block px-2 py-1 mb-4">TAG</div>
+                <h2 id="modal-title" class="text-3xl font-bold text-white mb-4 border-b border-gray-700 pb-2"></h2>
+                <!-- Markdown 内容区 -->
+                <div id="modal-desc" class="md-content text-sm"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS 逻辑 将贴在下一个回答中 -->
+<script>
+        const API_BASE = "http://127.0.0.1:8001/sophia/api";
+        
+        // 当前选中的标签页
+        let currentTab = 'philosopher';
+        
+        // 缓存数据，避免重复请求
+        const galleryCache = {
+            'philosopher': [], 'experiment': [], 'era': [], 'school': []
+        };
+
+        // --- 1. 背景刷新逻辑 (复用知识库代码) ---
+        async function fetchBackground() {
+            try {
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ action: "get_decoration" }) 
+                });
+                const data = await res.json();
+                if(data.image_path) {
+                    const bgEl = document.getElementById('dynamic-bg');
+                    bgEl.style.opacity = 0; 
+                    setTimeout(() => {
+                        bgEl.style.backgroundImage = `url('${data.image_path}')`;
+                        bgEl.style.opacity = 1; 
+                    }, 500);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function refreshBackground() { fetchBackground(); }
+
+// --- 2. 获取画廊数据 (全量真实获取版) ---
+        async function loadGalleryData(type) {
+            const container = document.getElementById('gallery-container');
+            
+            // 如果缓存里有数据，直接渲染（切换 Tab 秒开）
+            if (galleryCache[type].length > 0) {
+                renderGrid(galleryCache[type], type);
+                return;
+            }
+
+            container.innerHTML = `<div class="col-span-full text-center py-20 text-blue-500 pixel-font animate-pulse">DECRYPTING ${type.toUpperCase()} DATA...</div>`;
+
+            try {
+                // 直接请求我们新加的全量接口
+                const res = await fetch(API_BASE, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ action: "get_gallery_all", params: { target: type }}) 
+                });
+                
+                const responseData = await res.json();
+                
+                if(responseData.data) {
+                    // 存入缓存并渲染
+                    galleryCache[type] = responseData.data;
+                    renderGrid(responseData.data, type);
+                } else {
+                    throw new Error("No data returned");
+                }
+                
+            } catch (error) {
+                console.error("加载画廊数据失败:", error);
+                container.innerHTML = `<div class="col-span-full text-center py-20 text-red-500 pixel-font">ERROR CONNECTION TO MAINFRAME</div>`;
+            }
+        }
+// --- 3. 渲染网格 HTML (增强路径解析版) ---
+function renderGrid(data, type) {
+            const container = document.getElementById('gallery-container');
+            container.innerHTML = '';
+            
+            if (data.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-gray-500">No assets found.</div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const name = item.name || item.topic_name;
+                const id = item.id; // 直接获取后端传来的纯数字 ID
+                
+                // 极简且绝对不会报错的路径拼接
+                let imgSrc = '';
+                if (type === 'philosopher') imgSrc = `static/avatars/avatar_${id}.png`;
+                else if (type === 'experiment') imgSrc = `static/experiments/exp_${id}.png`;
+                else if (type === 'era') imgSrc = `static/eras/era_${id}.png`;
+                else if (type === 'school') imgSrc = `static/schools/school_${id}.png`;
+
+                const encodedData = encodeURIComponent(JSON.stringify(item));
+
+                const html = `
+                    <div class="gallery-item" onclick="openModal('${encodedData}', '${type}', '${imgSrc}')">
+                        <img src="${imgSrc}" onerror="this.src='static/pic/bg.png'">
+                        <div class="item-label pixel-font">${name}</div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }        // --- 4. 切换标签页 (Tabs) ---
+        function switchTab(type) {
+            if (currentTab === type) return;
+            
+            // 更新 UI 样式
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentTab = type;
+            loadGalleryData(type);
+        }
+
+        // --- 5. 弹窗 (Modal) 控制逻辑 ---
+        function openModal(encodedData, type, imgSrc) {
+            const data = JSON.parse(decodeURIComponent(encodedData));
+            const name = data.name || data.topic_name;
+            
+            // 组装描述内容
+            let descHtml = "";
+            if (type === 'philosopher') {
+                descHtml = marked.parse(data.description || "暂无生平资料。");
+                if (data.era) descHtml = `**活跃时期:** ${data.era}\n\n` + descHtml;
+            } else if (type === 'experiment') {
+                descHtml = marked.parse(data.description || "暂无实验说明。");
+            } else if (type === 'era') {
+                descHtml = marked.parse(data.era_summary || "暂无时代解析。");
+            } else if (type === 'school') {
+                descHtml = marked.parse(data.description || "暂无流派纲要。");
+            }
+
+            document.getElementById('modal-title').innerText = name;
+            document.getElementById('modal-tag').innerText = `DATA_TYPE: ${type.toUpperCase()}`;
+            document.getElementById('modal-img').src = imgSrc;
+            document.getElementById('modal-desc').innerHTML = marked.parse(descHtml);
+            
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal(event, force = false) {
+            // 如果点击的是背景蒙版，或者点击了关闭按钮，则关闭
+            if (force || event.target.id === 'modal-overlay') {
+                document.getElementById('modal-overlay').classList.remove('active');
+            }
+        }
+
+        // --- 初始化 ---
+        window.onload = () => {
+            fetchBackground();
+            // 默认加载哲学家数据
+            loadGalleryData('philosopher');
+        };
+    </script>
+</body>
+</html>
