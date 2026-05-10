@@ -111,9 +111,7 @@ async def sophia_api(req: QueryRequest):
             if target == "philosopher":
                 cur.execute("SELECT id, name, era, description FROM philosophers")
             elif target == "experiment":
-    # 关键修复：不再检查已经删除的 image_data 列
-                cur.execute("SELECT id, name, description FROM thought_experiments WHERE description IS NOT NULL")
-
+                cur.execute("SELECT id, name, description FROM thought_experiments")
             elif target == "era":
                 cur.execute("SELECT id, name, era_summary FROM era_backgrounds")
             elif target == "school":
