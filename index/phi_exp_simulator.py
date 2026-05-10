@@ -1,15 +1,23 @@
+import os
 import psycopg2
 from openai import OpenAI
 import json
 import re
 
+# --- 数据库连接：优先使用环境变量，兼容本地开发（使用 Neon 云端连接）---
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://neondb_owner:npg_jKDUwR6ldfY1@ep-wild-mode-aouqz0r7-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+)
+
 class ExperimentAgent:
     def __init__(self):
         self.ds_client = OpenAI(api_key="sk-125beb76c63b469485884a6a63deb157", base_url="https://api.deepseek.com")
-        self.db_config = {"database": "philosophy_db", "user": "postgres", "password": "536827", "host": "127.0.0.1", "port": "5432"}
+        # 不再使用本地 db_config，统一使用云端连接字符串
+        self.db_url = DATABASE_URL
 
     def get_db_conn(self):
-        return psycopg2.connect(**self.db_config)
+        return psycopg2.connect(self.db_url)
 
     def run_experiment_simulation(self, experiment_name, user_decision):
         conn = self.get_db_conn(); cur = conn.cursor()

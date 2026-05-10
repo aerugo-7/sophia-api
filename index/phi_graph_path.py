@@ -3,7 +3,7 @@ import psycopg2
 import networkx as nx
 
 # --- 数据库连接：优先使用环境变量，兼容本地开发 ---
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:536827@127.0.0.1:5432/philosophy_db")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_jKDUwR6ldfY1@ep-wild-mode-aouqz0r7-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
 
 def get_db_conn():
     """统一获取数据库连接"""
