@@ -111,7 +111,8 @@ async def sophia_api(req: QueryRequest):
             if target == "philosopher":
                 cur.execute("SELECT id, name, era, description FROM philosophers")
             elif target == "experiment":
-                cur.execute("SELECT id, name, description FROM thought_experiments")
+                # 关键修复：去掉 LIMIT 1，去掉 fetchone，只写查询语句
+                cur.execute("SELECT id, name, description FROM thought_experiments WHERE description IS NOT NULL")                
             elif target == "era":
                 cur.execute("SELECT id, name, era_summary FROM era_backgrounds")
             elif target == "school":
