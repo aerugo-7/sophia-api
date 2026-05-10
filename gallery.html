@@ -290,7 +290,7 @@ function renderGrid(data, type) {
             } else if (type === 'experiment') {
                 descHtml = marked.parse(data.description || "暂无实验说明。");
             } else if (type === 'era') {
-                descHtml = marked.parse(data.era_summary || "暂无时代解析。");
+                descHtml = marked.parse(data.description || "暂无时代解析。");
             } else if (type === 'school') {
                 descHtml = marked.parse(data.description || "暂无流派纲要。");
             }

@@ -34,6 +34,7 @@ class ExperimentAgent:
             
             执行要求：
             请从名单 {titan_names} 中选出一位支持者的哲学家 A 和一位持对立观点的哲学家 B。
+            输出的名字必须与名单中的文字【完全一致】
             必须严格按以下格式输出，不要有任何前言：
             [哲学家A的名字]：[支持论点，并直接回应用户的输入]
             [VS]
@@ -47,37 +48,37 @@ class ExperimentAgent:
             ai_text = resp.choices[0].message.content
 
 # --- 找到解析 [VS] 的逻辑，替换为以下代码 ---
+# --- 改进后的精准匹配逻辑 ---
             parts = ai_text.split('[VS]')
             final_philosophers = []
             
+            # titans 是我们之前从数据库拿到的 [(name, id), ...] 列表
             for part in parts:
                 text_segment = part.strip()
-                # 识别第一个冒号（兼容中英文冒号）
-                split_char = '：' if '：' in text_segment else ':'
-                if split_char in text_segment:
-                    # 提取冒号前的名字（去掉 AI 可能加的星号）
-                    raw_name = text_segment.split(split_char)[0].strip().replace('*', '')
-                    
-                    # 去数据库里搜这个人的真实 ID
-                    cur.execute("SELECT name, id FROM philosophers WHERE name LIKE %s LIMIT 1", (f"%{raw_name}%",))
-                    db_res = cur.fetchone()
-                    if db_res:
-                        final_philosophers.append({"name": db_res[0], "id": db_res[1]})
-                    else:
-                        final_philosophers.append({"name": raw_name, "id": 0})
-                else:
-                    final_philosophers.append({"name": "未知先贤", "id": 0})
+                matched = False
+                
+                # 直接在这一段的前 30 个字里寻找名单里的原名
+                for name, p_id in titans:
+                    if name in text_segment[:30]:
+                        final_philosophers.append({"name": name, "id": p_id})
+                        matched = True
+                        break
+                
+                if not matched:
+                    # 如果 AI 还是没听话，保底给一个 0 ID
+                    final_philosophers.append({"name": "先贤", "id": 0})
 
-            # 确保即使出错也返回两个占位对象
+            # 确保返回两个对象
             while len(final_philosophers) < 2:
-                final_philosophers.append({"name": "辩论者", "id": 0})
+                final_philosophers.append({"name": "先贤", "id": 0})
 
             cur.close(); conn.close()
             return {
-                "text": ai_text, # 返回带 [VS] 的原文
+                "text": ai_text,
                 "philosophers": final_philosophers,
-                "id": exp[2] # 确保这里叫 id，方便前端调用
-            }            
+                "exp_id": exp[2]
+            }
+                            
         except Exception as e:
             print(f"Error in Simulation: {e}")
             print(traceback.format_exc())
