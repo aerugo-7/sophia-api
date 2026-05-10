@@ -51,10 +51,10 @@
 
         /* 淡出+轻微缩小 */
         .flip-out {
-            animation: fadeOutScale 0.2s ease forwards; /* 加速动画 */
+            animation: fadeOutScale 0.2s ease forwards;
         }
         .flip-in {
-            animation: fadeInScale 0.2s ease forwards; /* 加速动画 */
+            animation: fadeInScale 0.2s ease forwards;
         }
         @keyframes fadeOutScale {
             0% { opacity: 1; transform: scale(1); }
@@ -82,13 +82,11 @@
         #content-era-desc, #content-school-desc {
             overflow-y: auto !important;
             display: block !important; 
-            /* 强制清除可能存在的 line-clamp 限制 */
             -webkit-line-clamp: unset !important; 
-            /* 设定固定高度，确保在 h-64 的卡片中不溢出，保持位置固定 */
             max-height: 110px; 
             padding-right: 8px;
             margin-top: 10px;
-            font-size: 14px; /* 对齐 PROFILE 正文字号 */
+            font-size: 14px;
             line-height: 1.6;
         }
 
@@ -109,7 +107,7 @@
 
         /* 强制杂谈正文字号与金句对齐 */
         .story-text-match {
-            font-size: 14px !important; /* 与金句正文字号一致 */
+            font-size: 14px !important;
             line-height: 1.6;
         }
     </style>
@@ -173,7 +171,7 @@
                 <div class="w-1/3 flex flex-col items-center justify-center border-r border-gray-700 pr-6">
                     <img id="content-philo-img" src="" class="w-40 h-40 object-cover border-2 border-yellow-500 mb-4 shadow-[4px_4px_0_0_rgba(250,204,21,0.5)]">
                     <h3 id="content-philo-name" class="font-bold text-xl text-white tracking-widest text-center"></h3>
-                    <span id="content-philo-era" class="text-xs text-gray-500 mt-1"></span>
+                    <span id="content-philo-era" class="text-xs text-gray-500 mt-1"></span>  <!-- 重新添加时期显示 -->
                 </div>
                 <div class="w-2/3 pl-6 overflow-y-auto md-content flex flex-col justify-center">
                     <h3 class="pixel-font text-yellow-400 mb-3 text-xs"># PROFILE</h3>
@@ -253,25 +251,18 @@
         // 工具函数：触发翻转动画，同时并行发起数据请求
         function triggerFlipAnimation(elementId, updateCallback) {
             const el = document.getElementById(elementId);
-            // 清除旧动画类
             el.classList.remove('flip-in', 'flip-out');
             void el.offsetWidth; 
-            
-            // 立即播放翻出动画
             el.classList.add('flip-out');
             
-            // 同时立刻开始请求数据（动画和请求并行）
             const requestPromise = updateCallback();
             
-            // 当请求完成时，播放翻入动画（此时翻出动画可能还在进行或已完成）
             requestPromise.then(() => {
-                // 确保翻出动画结束（如果还在进行，用极短的延迟等待）
                 setTimeout(() => {
                     el.classList.remove('flip-out');
                     el.classList.add('flip-in');
-                }, 50); // 极短缓冲，视觉更连贯
+                }, 50);
             }).catch(() => {
-                // 即使出错也播放翻入
                 setTimeout(() => {
                     el.classList.remove('flip-out');
                     el.classList.add('flip-in');
@@ -283,12 +274,10 @@
 
         async function fetchQuotes() {
             try {
-                // 向 unified_api 请求 3 条金句
                 const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_content", params: { type: "金句", limit: 3 }}) });
                 const data = await res.json();
                 let html = "";
                 data.data.forEach(item => {
-                    // 使用 marked.parse 解析 markdown
                     html += `<div class="border-l-2 border-yellow-600 pl-3 mb-4"><div class="italic text-gray-300">"${marked.parseInline(item.text)}"</div><div class="text-right text-xs text-yellow-600 mt-1">— ${item.author} 《${item.title}》</div></div>`;
                 });
                 document.getElementById('content-quotes').innerHTML = html;
@@ -297,7 +286,6 @@
 
         async function fetchStories() {
             try {
-                // 向后端请求 3 条小故事
                 const res = await fetch(API_BASE, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
@@ -307,7 +295,6 @@
                 let html = "";
                 
                 data.data.forEach(item => {
-                    // 构造 HTML：正文使用 marked 渲染，下方加入右对齐的出处
                     html += `
                         <div class="mb-6 border-b border-white/5 pb-4 last:border-0">
                             <div class="text-gray-300 story-text-match">
@@ -332,12 +319,35 @@
             } catch (e) { console.error(e); }
         }
 
+        // 格式化时期显示
+        function formatEra(era) {
+            if (era === undefined || era === null || era === '') return '';
+            const str = String(era).trim();
+            // 如果明确写着“不确定”或“不详”之类
+            if (/不确定|不详|未知|未知世纪/i.test(str)) {
+                return '时代不详';
+            }
+            // 尝试转换为数字
+            const num = parseFloat(str);
+            if (!isNaN(num)) {
+                const absCentury = Math.abs(Math.round(num));
+                if (num < 0) {
+                    return `公元前${absCentury}世纪`;
+                } else {
+                    return `${absCentury}世纪`;
+                }
+            }
+            // 其他情况直接返回原始字符串
+            return str;
+        }
+
         async function fetchPhilosopher() {
             try {
                 const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_random", params: { target: "philosopher" }}) });
                 const data = await res.json();
                 document.getElementById('content-philo-name').innerText = data.name;
-                document.getElementById('content-philo-era').innerText = data.era;
+                // 格式化并显示时期
+                document.getElementById('content-philo-era').innerText = formatEra(data.era);
                 document.getElementById('content-philo-desc').innerHTML = marked.parse(data.description || "无记录");
                 document.getElementById('content-philo-img').src = `static/avatars/avatar_${data.id}.png`;
             } catch (e) { console.error(e); }
@@ -381,16 +391,13 @@
                 });
                 const data = await res.json();
                 
-                // 1. 设置名字
                 document.getElementById('gossip-name-1').innerText = data.source;
                 document.getElementById('gossip-name-2').innerText = data.target;
                 document.getElementById('gossip-relation').innerText = data.relation;
                 
-                // 2. 【关键修改】：使用 ID 拼接头像路径
                 document.getElementById('gossip-img-1').src = `static/avatars/avatar_${data.source_id}.png`;
                 document.getElementById('gossip-img-2').src = `static/avatars/avatar_${data.target_id}.png`;
                 
-                // 3. 渲染描述
                 document.getElementById('gossip-desc').innerHTML = marked.parse(data.description || "逻辑连通中...");
             } catch (e) { console.error("Gossip 加载失败", e); }
         }
@@ -416,22 +423,19 @@
                 const data = await res.json();
                 if(data.image_path) {
                     const bgEl = document.getElementById('dynamic-bg');
-                    bgEl.style.opacity = 0; // 先变黑
+                    bgEl.style.opacity = 0;
                     
                     setTimeout(() => {
                         bgEl.style.backgroundImage = `url('${data.image_path}')`;
-                        bgEl.style.opacity = 1; // 再亮起
-                    }, 200); // 由500ms改为200ms
+                        bgEl.style.opacity = 1;
+                    }, 200);
                 }
             } catch (e) { console.error(e); }
         }
 
-        // 绑定给左上角按钮
         function refreshBackground() {
             fetchBackground();
         }
-
-        // --- 全局控制与按钮绑定 ---
 
         const cardUpdateMap = {
             'quotes': fetchQuotes,
@@ -449,9 +453,8 @@
             triggerFlipAnimation('card-' + cardKey, cardUpdateMap[cardKey]);
         }
 
-        // 页面初始化：加载所有数据 + 随机背景
         window.onload = () => {
-            fetchBackground(); // 页面一打开就随机一个背景
+            fetchBackground();
             Object.values(cardUpdateMap).forEach(fn => fn());
         };
     </script>
