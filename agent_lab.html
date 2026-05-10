@@ -448,9 +448,7 @@
                 // --- 逻辑优化 ---
                 let content = data.evolution;
                 
-                // 1. 自动清理可能存在的星号（多重保险）
-                content = content.replace(/\*/g, '');
-                
+
                 // 2. 渲染 (marked 会处理 AI 返回的 <h2>, <h3> 和 <p> 标签)
                 resBox.innerHTML = marked.parse(content);
 
