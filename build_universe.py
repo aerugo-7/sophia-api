@@ -172,7 +172,7 @@ def generate_unified_universe():
         </div>
 
         <script>
-            const API_BASE = "http://127.0.0.1:8000/sophia/api";
+            const API_BASE = "https://sophia-api-production-e49c.up.railway.app/sophia/api";
             const globeRaw = {json.dumps(globe_points)};
             const nebulaNodesRaw = {json.dumps(nebula_nodes)};
             const nebulaEdgesRaw = {json.dumps(nebula_edges)};
