@@ -111,12 +111,9 @@ async def sophia_api(req: QueryRequest):
             if target == "philosopher":
                 cur.execute("SELECT id, name, era, description FROM philosophers")
             elif target == "experiment":
-                            # 关键修复：不但要 SELECT id，还要把 id 塞进 result 字典
-                            cur.execute("SELECT name, description, id FROM thought_experiments WHERE description IS NOT NULL ORDER BY RANDOM() LIMIT 1")
-                            row = cur.fetchone()
-                            if row: 
-                                # 必须把 row[2] 赋值给 "id"
-                                result = {"name": row[0], "description": row[1], "id": row[2]}                
+    # 关键修复：不再检查已经删除的 image_data 列
+                cur.execute("SELECT id, name, description FROM thought_experiments WHERE description IS NOT NULL")
+
             elif target == "era":
                 cur.execute("SELECT id, name, era_summary FROM era_backgrounds")
             elif target == "school":
