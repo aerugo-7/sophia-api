@@ -51,6 +51,12 @@
             border: 2px solid #ffffff; box-shadow: 12px 12px 0px #0000ff;
             padding: 35px; margin-bottom: 50px;
         }
+                .station-card::before {
+            content: "LAB_SEC_0" counter(section);
+            position: absolute; top: -10px; left: 20px;
+            background: #0000ff; color: #fff; padding: 2px 8px;
+            font-size: 8px; font-family: 'Press Start 2P';
+        }
 
         .label-sm { font-size: 13px; color: #60a5fa; margin-bottom: 8px; }
         .title-md { font-size: 22px; font-weight: bold; color: #fff; margin-bottom: 20px; }
