@@ -8,7 +8,7 @@ API_KEY = "sk-hvbcfazpdzwzvckmlvmcjivqfyqwzfhpcdjtbsqgzhoqnurt"
 
 # 数据库连接：优先读取环境变量（云端部署用），如果没有则用你提供的连接字符串
 # 请将下方的字符串替换为你从 Neon 复制的最新完整连接字符串
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:536827@你的Host地址/neondb?sslmode=require")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_jKDUwR6ldfY1@ep-wild-mode-aouqz0r7-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
 
 def get_embedding(text):
     """调用 SiliconFlow 将文本转为 1024 维向量"""
