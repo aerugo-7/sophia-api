@@ -80,7 +80,14 @@ def generate_unified_universe():
             }}
             #unified-sidebar {{ left: -420px; }}
             #unified-sidebar.open {{ left: 20px; }}
-            #pathfinder-panel {{ right: 20px; display: none; }}
+            
+            /* 关键修改：将检索框移至右下角 */
+            #pathfinder-panel {{ 
+                right: 20px; 
+                bottom: 100px; 
+                top: auto; 
+                display: none; 
+            }}
 
             .refresh-btn-sync {{
                 position: fixed; top: 1rem; left: 1rem; z-index: 1001;
@@ -98,7 +105,18 @@ def generate_unified_universe():
             .view-layer.active {{ opacity: 1; pointer-events: auto; }}
 
             #loader {{ position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ca8a04; font-family: monospace; z-index: 2000; display: none; text-align: center; }}
-            #legend {{ position: fixed; top: 80px; right: 20px; background: rgba(0,0,0,0.6); padding: 15px; border: 1px solid #333; z-index: 500; display: none; }}
+            
+            /* 关键修改：图例位置固定在右上角 */
+            #legend {{ 
+                position: fixed; 
+                top: 80px; 
+                right: 20px; 
+                background: rgba(0,0,0,0.6); 
+                padding: 15px; 
+                border: 1px solid #333; 
+                z-index: 500; 
+                display: none; 
+            }}
 
             .mode-switcher {{ position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,0,0,0.8); border: 2px solid #3b82f6; padding: 5px; z-index: 1500; }}
             .mode-btn {{ padding: 10px 20px; font-size: 10px; cursor: pointer; color: #4b5563; }}
@@ -187,14 +205,9 @@ def generate_unified_universe():
                     
                     if (data.image_path) {{
                         const bgEl = document.getElementById('dynamic-bg');
-                        
-                        // 1. 先让背景透明（触发 CSS 的 transition 淡出）
                         bgEl.style.opacity = 0;
-                        
-                        // 2. 等待 500ms（淡出完成后）再换图
                         setTimeout(() => {{
                             bgEl.style.backgroundImage = `url('${{data.image_path}}')`;
-                            // 3. 换图后让背景恢复不透明（触发 CSS 的 transition 淡入）
                             bgEl.style.opacity = 1;
                         }}, 200);
                     }}
@@ -208,11 +221,8 @@ def generate_unified_universe():
             function openSidebar(data) {{
                 document.getElementById('side-name').innerText = data.name;
                 document.getElementById('side-tier-display').innerText = data.tier || "思想节点";
-                
-                // 关键：利用传入的 db_id 拼接路径
                 const philoId = data.db_id; 
                 document.getElementById('side-img').src = philoId ? `static/avatars/avatar_${{philoId}}.png` : 'static/pic/bg.png';
-                
                 document.getElementById('side-desc').innerHTML = marked.parse(data.description || data.brief || "");
                 document.getElementById('unified-sidebar').classList.add('open');
             }}
@@ -286,10 +296,8 @@ def generate_unified_universe():
                 nebulaNetwork.on("stabilizationIterationsDone", () => {{
                     document.getElementById('loader').style.display = 'none';
                     nebulaNetwork.fit();
-                    // 这里不关闭物理，保持缓慢运动
                 }});
 
-                // 悬停交互：显名
                 nebulaNetwork.on("hoverNode", p => {{
                     if(!window.isLocked) {{
                         nebulaNetwork.setOptions({{ physics: false }});
@@ -303,7 +311,6 @@ def generate_unified_universe():
                     }}
                 }});
 
-                // 点击交互：高亮一阶并弹出卡片
                 nebulaNetwork.on("click", p => {{
                     if (p.nodes.length > 0) {{
                         window.isLocked = true;
@@ -315,7 +322,6 @@ def generate_unified_universe():
 
                         openSidebar({{ name: node.id, tier: node.tier, db_id: node.db_id, brief: node.brief }});
 
-                        // 全场变暗，高亮目标和邻居
                         nebulaNodes.update(nebulaNodes.get().map(n => ({{
                             id: n.id,
                             opacity: (n.id === nId || neighbors.includes(n.id)) ? 1 : 0.05,
